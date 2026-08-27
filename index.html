@@ -75,6 +75,7 @@
       display: flex;
       flex-direction: column;
       gap: 4px;
+      overflow-y: auto;
     }
 
     .menu-label {
@@ -310,7 +311,6 @@
       max-width: 440px;
     }
 
-    /* BATCH BUILDER DATE GRID */
     .date-selector-grid {
       display: grid;
       grid-template-columns: repeat(7, 1fr);
@@ -375,11 +375,16 @@
       <div class="sidebar-menu">
         <span class="menu-label">Department Calendar</span>
         <select id="filter-dept" class="dept-select">
-          <option value="Kennels">🐕 Kennels</option>
-          <option value="Boarding">🏨 Boarding</option>
-          <option value="Cattery">🐱 Cattery</option>
-          <option value="Daycare">☀️ Daycare</option>
-          <option value="Reception">📋 Reception</option>
+          <option value="Rescue Team">🐾 Rescue Team</option>
+          <option value="Rescue Office">📋 Rescue Office</option>
+          <option value="Boarding Team/runners">🏨 Boarding Team/runners</option>
+          <option value="Boarding Office">📂 Boarding Office</option>
+          <option value="Dog Daycare">☀️ Dog Daycare</option>
+          <option value="Cremations">🕊️ Cremations</option>
+          <option value="Dog Warden">🚐 Dog Warden</option>
+          <option value="Supervisor/Manager">👔 Supervisor/Manager</option>
+          <option value="Late Night Checkers">🌙 Late Night Checkers</option>
+          <option value="Maintenance/Other">🛠️ Maintenance/Other</option>
         </select>
 
         <span class="menu-label" style="margin-top: 16px;">Navigation</span>
@@ -401,7 +406,7 @@
     <main class="main-wrapper">
       <div class="top-bar">
         <div>
-          <h1 style="margin:0; font-size: 1.5rem;" id="active-dept-title">Kennels Rota</h1>
+          <h1 style="margin:0; font-size: 1.5rem;" id="active-dept-title">Rescue Team Rota</h1>
           <span style="color: var(--text-muted); font-size: 0.9rem;">Team shift schedule</span>
         </div>
 
@@ -500,11 +505,16 @@
       <div class="input-group">
         <label>Department</label>
         <select id="invite-dept">
-          <option value="Kennels">Kennels</option>
-          <option value="Boarding">Boarding</option>
-          <option value="Cattery">Cattery</option>
-          <option value="Daycare">Daycare</option>
-          <option value="Reception">Reception</option>
+          <option value="Rescue Team">Rescue Team</option>
+          <option value="Rescue Office">Rescue Office</option>
+          <option value="Boarding Team/runners">Boarding Team/runners</option>
+          <option value="Boarding Office">Boarding Office</option>
+          <option value="Dog Daycare">Dog Daycare</option>
+          <option value="Cremations">Cremations</option>
+          <option value="Dog Warden">Dog Warden</option>
+          <option value="Supervisor/Manager">Supervisor/Manager</option>
+          <option value="Late Night Checkers">Late Night Checkers</option>
+          <option value="Maintenance/Other">Maintenance/Other</option>
         </select>
       </div>
       <button id="send-invite-btn" class="btn-primary">Generate Invite Link</button>
@@ -689,7 +699,6 @@
       }
     }
 
-    /* BATCH BUILDER FUNCTIONS */
     function populateBatchStaffDropdown() {
       const select = document.getElementById('batch-staff-select');
       select.innerHTML = '<option value="">-- Choose Team Member --</option>';
@@ -752,7 +761,6 @@
       loadAndRenderCalendar();
     });
 
-    /* SINGLE SHIFT MODAL */
     function openShiftModal(dateStr) {
       selectedDate = dateStr;
       document.getElementById('modal-date-label').innerText = dateStr;
@@ -812,7 +820,6 @@
       }
     }
 
-    // GENERATE INVITE LINK
     document.getElementById('send-invite-btn').addEventListener('click', async () => {
       const email = document.getElementById('invite-email').value.trim().toLowerCase();
       const name = document.getElementById('invite-name').value.trim();
@@ -837,7 +844,6 @@
       alert('Link copied to clipboard!');
     });
 
-    // UI DRAWERS & CONTROLS
     document.getElementById('btn-open-batch').addEventListener('click', () => {
       renderBatchDateGrid();
       document.getElementById('batch-drawer').classList.add('open');

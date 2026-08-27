@@ -1,0 +1,15 @@
+{
+  "name": "St Giles Rota",
+  "short_name": "StGilesRota",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#0056b3",
+  "icons": [
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}

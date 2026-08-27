@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>St Giles Animal Centre - Rota</title>
+  <link rel="manifest" href="manifest.json">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="container">
+    <h2>St Giles Rota System</h2>
+
+    <!-- LOGIN FORM -->
+    <div id="auth-box">
+      <input type="email" id="email" placeholder="Email address">
+      <input type="password" id="password" placeholder="Password">
+      <button id="login-btn">Sign In</button>
+      <p id="error-msg"></p>
+    </div>
+
+    <!-- MAIN APP DASHBOARD (Hidden until logged in) -->
+    <div id="dashboard" style="display: none;">
+      <div id="user-bar">
+        <span>Logged in as: <strong id="user-display"></strong></span>
+        <button id="logout-btn">Logout</button>
+      </div>
+
+      <!-- STAFF VIEW -->
+      <div id="staff-view">
+        <h3>My Shift Schedule</h3>
+        <div id="my-shifts">Loading shifts...</div>
+        
+        <h3>Request Time Off</h3>
+        <input type="date" id="leave-start">
+        <input type="date" id="leave-end">
+        <input type="text" id="leave-reason" placeholder="Reason (Optional)">
+        <button id="submit-leave-btn">Submit Request</button>
+      </div>
+
+      <!-- ADMIN VIEW (Visible only to Admins) -->
+      <div id="admin-view" style="display: none;">
+        <h3>Admin Rota Management</h3>
+        <div id="master-grid">Master grid interface</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- FIREBASE INTEGRATION -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+    import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+    import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+    // PASTE YOUR FIREBASE CONFIG HERE
+    const firebaseConfig = {
+      apiKey: "YOUR_API_KEY",
+      authDomain: "stgiles-rota.firebaseapp.com",
+      projectId: "stgiles-rota",
+      storageBucket: "stgiles-rota.appspot.com",
+      messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
+      appId: "YOUR_APP_ID"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+
+    // Auth listener
+    onAuthStateChanged(auth, async (user) => {
+      if (user) {
+        document.getElementById('auth-box').style.display = 'none';
+        document.getElementById('dashboard').style.display = 'block';
+
+        // Fetch user metadata (Role & Department)
+        const userDoc = await getDoc(doc(db, "users", user.uid));
+        if (userDoc.exists()) {
+          const userData = userDoc.data();
+          document.getElementById('user-display').innerText = userData.displayName;
+          if (userData.role === 'admin') {
+            document.getElementById('admin-view').style.display = 'block';
+          }
+        }
+      } else {
+        document.getElementById('auth-box').style.display = 'block';
+        document.getElementById('dashboard').style.display = 'none';
+      }
+    });
+
+    // Login Handler
+    document.getElementById('login-btn').addEventListener('click', () => {
+      const email = document.getElementById('email').value;
+      const pass = document.getElementById('password').value;
+      signInWithEmailAndPassword(auth, email, pass).catch(err => {
+        document.getElementById('error-msg').innerText = err.message;
+      });
+    });
+
+    // Logout Handler
+    document.getElementById('logout-btn').addEventListener('click', () => signOut(auth));
+
+    // Register Service Worker for PWA installation
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('./sw.js');
+    }
+  </script>
+</body>
+</html>

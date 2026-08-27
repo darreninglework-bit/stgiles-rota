@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>St Giles Animal Centre - Rota System</title>
+  <title>St Giles Animal Centre - Quick Rota</title>
   <link rel="manifest" href="manifest.json">
   <style>
     :root {
@@ -90,6 +90,11 @@
       font-size: 12px;
       display: flex;
       flex-direction: column;
+      cursor: pointer;
+      transition: background 0.15s ease-in-out;
+    }
+    .calendar-day:hover {
+      background: #eef6ff;
     }
     .day-number { font-weight: bold; margin-bottom: 4px; color: #555; }
     .shift-tag {
@@ -100,9 +105,45 @@
       margin-top: 4px;
       font-size: 11px;
       border-left: 3px solid #1976d2;
+      display: flex;
+      justify-content: space-between;
     }
     .shift-off { background: #f8d7da; color: #721c24; border-left-color: #dc3545; }
     .shift-holiday { background: #fff3cd; color: #856404; border-left-color: #ffc107; }
+
+    /* POPUP MODAL FOR QUICK SHIFT ENTRY */
+    .modal-overlay {
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0,0,0,0.5);
+      display: none;
+      justify-content: center;
+      align-items: center;
+      z-index: 1000;
+    }
+    .modal-content {
+      background: white;
+      padding: 20px;
+      border-radius: 10px;
+      width: 90%;
+      max-width: 450px;
+      box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+    }
+    .staff-checkbox-list {
+      max-height: 180px;
+      overflow-y: auto;
+      border: 1px solid #ddd;
+      padding: 10px;
+      border-radius: 6px;
+      margin: 10px 0;
+    }
+    .staff-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 4px 0;
+    }
+
     .admin-panel {
       margin-top: 30px;
       border-top: 2px dashed #ccc;
@@ -153,40 +194,14 @@
         </div>
       </div>
 
+      <p id="admin-tip" style="color: #666; font-size: 13px; display: none;">💡 <strong>Quick Schedule:</strong> Click any day box in the calendar to assign staff shifts instantly.</p>
+
       <!-- CALENDAR GRID -->
       <div class="calendar-grid" id="calendar-grid"></div>
 
-      <!-- ADMIN CONTROLS -->
+      <!-- ADMIN PANEL (INVITE ONLY) -->
       <div id="admin-view" class="admin-panel" style="display: none;">
         <h3>Admin Tools</h3>
-
-        <!-- ASSIGN SHIFT -->
-        <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
-          <h4>Assign Shift</h4>
-          <div style="display: flex; gap: 8px; flex-wrap: wrap; align-items: center;">
-            <input type="text" id="shift-staff-name" placeholder="Staff Name">
-            <input type="date" id="shift-date">
-            <select id="shift-dept">
-              <option value="Kennels">Kennels</option>
-              <option value="Boarding">Boarding</option>
-              <option value="Cattery">Cattery</option>
-              <option value="Daycare">Daycare</option>
-              <option value="Reception">Reception</option>
-            </select>
-            <select id="shift-preset">
-              <option value="7am - 4pm">7am - 4pm</option>
-              <option value="8am - 5pm">8am - 5pm</option>
-              <option value="10am - 7pm">10am - 7pm</option>
-              <option value="Day Off">Day Off</option>
-              <option value="Holiday">Holiday</option>
-              <option value="CUSTOM">Custom Shift...</option>
-            </select>
-            <input type="text" id="shift-custom" placeholder="e.g. 12pm - 4pm" style="display: none;">
-            <button id="save-shift-btn" class="btn-success">+ Save Shift</button>
-          </div>
-        </div>
-
-        <!-- INVITE STAFF MEMBER (SIMPLIFIED: EMAIL, NAME, DEPARTMENT) -->
         <div style="background: #f8f9fa; padding: 15px; border-radius: 8px;">
           <h4>Invite New Staff Member</h4>
           <div style="display: flex; gap: 8px; flex-wrap: wrap;">
@@ -207,10 +222,38 @@
     </div>
   </div>
 
+  <!-- POPUP MODAL FOR QUICK ASSIGNING -->
+  <div id="shift-modal" class="modal-overlay">
+    <div class="modal-content">
+      <h3 style="margin-top: 0;">Assign Shifts for <span id="modal-date-label"></span></h3>
+      
+      <label><strong>1. Select Staff Member(s):</strong></label>
+      <div id="modal-staff-list" class="staff-checkbox-list">
+        <!-- Populated dynamically with department staff -->
+      </div>
+
+      <label><strong>2. Select Shift Time:</strong></label>
+      <select id="modal-shift-preset" style="width: 100%;">
+        <option value="7am - 4pm">7am - 4pm</option>
+        <option value="8am - 5pm">8am - 5pm</option>
+        <option value="10am - 7pm">10am - 7pm</option>
+        <option value="Day Off">Day Off</option>
+        <option value="Holiday">Holiday</option>
+        <option value="CUSTOM">Custom Shift...</option>
+      </select>
+      <input type="text" id="modal-shift-custom" placeholder="e.g. 12pm - 4pm" style="width: 95%; display: none;">
+
+      <div style="display: flex; gap: 10px; margin-top: 15px; justify-content: flex-end;">
+        <button id="modal-cancel-btn" class="btn-danger">Cancel</button>
+        <button id="modal-save-btn" class="btn-success">Save Shifts</button>
+      </div>
+    </div>
+  </div>
+
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
     import { getAuth, signInWithEmailAndPassword, sendPasswordResetEmail, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
-    import { getFirestore, doc, getDoc, setDoc, collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+    import { getFirestore, doc, getDoc, setDoc, deleteDoc, collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
     const firebaseConfig = {
       apiKey: "AIzaSyCpKVdl5bsAL9wOEES7vr6-B-8kAEv_fLA",
@@ -228,6 +271,9 @@
 
     let currentDate = new Date();
     let currentShifts = [];
+    let deptStaff = [];
+    let selectedDate = '';
+    let isAdminUser = false;
 
     onAuthStateChanged(auth, async (user) => {
       if (user) {
@@ -235,7 +281,6 @@
         document.getElementById('dashboard').style.display = 'block';
 
         try {
-          // Check if newly logged-in user has pending invite metadata
           const inviteDoc = await getDoc(doc(db, "invites", user.email.toLowerCase()));
           if (inviteDoc.exists()) {
             const inv = inviteDoc.data();
@@ -254,7 +299,9 @@
               document.getElementById('filter-dept').value = userData.department;
             }
             if (userData.role === 'admin') {
+              isAdminUser = true;
               document.getElementById('admin-view').style.display = 'block';
+              document.getElementById('admin-tip').style.display = 'block';
             }
           }
         } catch (e) {
@@ -269,7 +316,6 @@
       }
     });
 
-    // LOAD SHIFTS & RENDER CALENDAR
     async function loadAndRenderCalendar() {
       const year = currentDate.getFullYear();
       const month = currentDate.getMonth();
@@ -278,11 +324,20 @@
       document.getElementById('current-month-label').innerText = 
         currentDate.toLocaleString('default', { month: 'long', year: 'numeric' });
 
+      // Fetch active shifts for this department
       currentShifts = [];
       try {
         const q = query(collection(db, "shifts"), where("department", "==", dept));
         const querySnapshot = await getDocs(q);
-        querySnapshot.forEach((doc) => currentShifts.push(doc.data()));
+        querySnapshot.forEach((doc) => currentShifts.push({ id: doc.id, ...doc.data() }));
+      } catch (err) { console.log(err); }
+
+      // Fetch registered staff for quick-select list
+      deptStaff = [];
+      try {
+        const qStaff = query(collection(db, "users"), where("department", "==", dept));
+        const staffSnap = await getDocs(qStaff);
+        staffSnap.forEach((doc) => deptStaff.push(doc.data().displayName));
       } catch (err) { console.log(err); }
 
       renderGrid(year, month);
@@ -300,7 +355,7 @@
       const startingIndex = (firstDay === 0 ? 6 : firstDay - 1);
 
       for (let i = 0; i < startingIndex; i++) {
-        grid.innerHTML += `<div class="calendar-day" style="background: #f9f9f9;"></div>`;
+        grid.innerHTML += `<div class="calendar-day" style="background: #f9f9f9; cursor: default;"></div>`;
       }
 
       for (let day = 1; day <= daysInMonth; day++) {
@@ -312,49 +367,122 @@
           let styleClass = 'shift-tag';
           if (s.shift === 'Day Off') styleClass += ' shift-off';
           if (s.shift === 'Holiday') styleClass += ' shift-holiday';
-          shiftHTML += `<div class="${styleClass}"><strong>${s.staffName}</strong>: ${s.shift}</div>`;
+          shiftHTML += `
+            <div class="${styleClass}">
+              <span><strong>${s.staffName}</strong>: ${s.shift}</span>
+              ${isAdminUser ? `<span onclick="event.stopPropagation(); deleteShift('${s.id}')" style="cursor:pointer; font-weight:bold; margin-left:4px;">&times;</span>` : ''}
+            </div>`;
         });
 
-        grid.innerHTML += `
-          <div class="calendar-day">
-            <span class="day-number">${day}</span>
-            ${shiftHTML}
-          </div>
-        `;
+        const dayEl = document.createElement('div');
+        dayEl.className = 'calendar-day';
+        dayEl.innerHTML = `<span class="day-number">${day}</span>${shiftHTML}`;
+
+        if (isAdminUser) {
+          dayEl.addEventListener('click', () => openShiftModal(formattedDate));
+        }
+
+        grid.appendChild(dayEl);
       }
     }
 
-    // SIMPLIFIED INVITE STAFF PROCESS
+    // OPEN POPUP MODAL TO ADD SHIFT FOR CLICKED DAY
+    function openShiftModal(dateStr) {
+      selectedDate = dateStr;
+      document.getElementById('modal-date-label').innerText = dateStr;
+      
+      const staffListContainer = document.getElementById('modal-staff-list');
+      staffListContainer.innerHTML = '';
+
+      if (deptStaff.length === 0) {
+        staffListContainer.innerHTML = '<span style="color:#888;">No staff registered under this department yet. You can type a name directly.</span><br><input type="text" id="manual-staff-name" placeholder="Staff Name" style="width: 90%; margin-top: 5px;">';
+      } else {
+        deptStaff.forEach((name, i) => {
+          staffListContainer.innerHTML += `
+            <div class="staff-item">
+              <input type="checkbox" id="staff-chk-${i}" value="${name}">
+              <label for="staff-chk-${i}">${name}</label>
+            </div>`;
+        });
+      }
+
+      document.getElementById('shift-modal').style.display = 'flex';
+    }
+
+    // SAVE SHIFTS FROM MODAL
+    document.getElementById('modal-save-btn').addEventListener('click', async () => {
+      const dept = document.getElementById('filter-dept').value;
+      const preset = document.getElementById('modal-shift-preset').value;
+      const custom = document.getElementById('modal-shift-custom').value;
+      const shiftValue = preset === 'CUSTOM' ? custom : preset;
+
+      let selectedStaff = [];
+      const manualInput = document.getElementById('manual-staff-name');
+
+      if (manualInput && manualInput.value.trim() !== '') {
+        selectedStaff.push(manualInput.value.trim());
+      } else {
+        const checkboxes = document.querySelectorAll('#modal-staff-list input[type="checkbox"]:checked');
+        checkboxes.forEach(chk => selectedStaff.push(chk.value));
+      }
+
+      if (selectedStaff.length === 0) {
+        alert('Please select or enter at least one staff member.');
+        return;
+      }
+
+      for (const name of selectedStaff) {
+        const shiftId = `${selectedDate}_${name.replace(/\s+/g, '')}`;
+        await setDoc(doc(db, "shifts", shiftId), {
+          staffName: name,
+          date: selectedDate,
+          department: dept,
+          shift: shiftValue
+        });
+      }
+
+      document.getElementById('shift-modal').style.display = 'none';
+      loadAndRenderCalendar();
+    });
+
+    // DELETE SHIFT DIRECTLY FROM CALENDAR
+    window.deleteShift = async function(shiftId) {
+      if (confirm('Delete this shift assignment?')) {
+        await deleteDoc(doc(db, "shifts", shiftId));
+        loadAndRenderCalendar();
+      }
+    }
+
+    document.getElementById('modal-cancel-btn').addEventListener('click', () => {
+      document.getElementById('shift-modal').style.display = 'none';
+    });
+
+    document.getElementById('modal-shift-preset').addEventListener('change', (e) => {
+      document.getElementById('modal-shift-custom').style.display = e.target.value === 'CUSTOM' ? 'block' : 'none';
+    });
+
+    // INVITE HANDLER
     document.getElementById('send-invite-btn').addEventListener('click', async () => {
       const email = document.getElementById('invite-email').value.trim().toLowerCase();
       const name = document.getElementById('invite-name').value.trim();
       const dept = document.getElementById('invite-dept').value;
 
-      if (!email || !name) {
-        alert('Please enter both the email address and full name.');
-        return;
-      }
+      if (!email || !name) return alert('Enter email and full name.');
 
       try {
-        // Save invite metadata to Firestore
         await setDoc(doc(db, "invites", email), {
           displayName: name,
           department: dept,
           createdAt: new Date().toISOString()
         });
-
-        // Trigger Firebase password email so they can log in
         await sendPasswordResetEmail(auth, email);
-
-        alert(`Invitation sent to ${email}! They will receive an email to create their password and activate their account.`);
+        alert(`Invite sent to ${email}!`);
         document.getElementById('invite-email').value = '';
         document.getElementById('invite-name').value = '';
-      } catch (err) {
-        alert("Error sending invite: " + err.message);
-      }
+      } catch (err) { alert("Error: " + err.message); }
     });
 
-    // NAVIGATION & SHIFTS
+    // NAV & FILTERS
     document.getElementById('prev-month').addEventListener('click', () => {
       currentDate.setMonth(currentDate.getMonth() - 1);
       loadAndRenderCalendar();
@@ -365,34 +493,7 @@
     });
     document.getElementById('filter-dept').addEventListener('change', loadAndRenderCalendar);
 
-    document.getElementById('shift-preset').addEventListener('change', (e) => {
-      document.getElementById('shift-custom').style.display = e.target.value === 'CUSTOM' ? 'inline-block' : 'none';
-    });
-
-    document.getElementById('save-shift-btn').addEventListener('click', async () => {
-      const staffName = document.getElementById('shift-staff-name').value;
-      const date = document.getElementById('shift-date').value;
-      const dept = document.getElementById('shift-dept').value;
-      const preset = document.getElementById('shift-preset').value;
-      const custom = document.getElementById('shift-custom').value;
-
-      const shiftValue = preset === 'CUSTOM' ? custom : preset;
-
-      if (!staffName || !date) return alert('Enter staff name and date.');
-
-      const shiftId = `${date}_${staffName.replace(/\s+/g, '')}`;
-      await setDoc(doc(db, "shifts", shiftId), {
-        staffName,
-        date,
-        department: dept,
-        shift: shiftValue
-      });
-
-      alert('Shift assigned!');
-      loadAndRenderCalendar();
-    });
-
-    // AUTH HANDLERS
+    // AUTH
     document.getElementById('login-btn').addEventListener('click', () => {
       const email = document.getElementById('email').value;
       const pass = document.getElementById('password').value;

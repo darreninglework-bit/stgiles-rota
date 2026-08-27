@@ -517,13 +517,9 @@
           <option value="Maintenance/Other">Maintenance/Other</option>
         </select>
       </div>
-      <button id="send-invite-btn" class="btn-primary">Generate Invite Link</button>
+      <button id="send-invite-btn" class="btn-primary">Send Invite Email</button>
 
       <div id="link-result-box" style="display:none; margin-top: 20px; padding: 12px; background: #eff6ff; border-radius: 8px; border: 1px solid #bfdbfe;">
-        <span style="font-size:0.8rem; font-weight:700; color:#1e40af; display:block; margin-bottom:6px;">✅ Staff Member Created!</span>
-        <p style="font-size:0.8rem; color:#1e3a8a; margin:0 0 10px 0;">Copy and send this link directly to the employee so they can set their password:</p>
-        <input type="text" id="generated-invite-link" readonly style="font-size:0.8rem; background:white; margin-bottom:8px;">
-        <button id="copy-link-btn" class="btn-primary" style="background:#1d4ed8;">📋 Copy Setup Link</button>
       </div>
     </div>
 
@@ -829,19 +825,14 @@
 
       try {
         await setDoc(doc(db, "invites", email), { displayName: name, department: dept, createdAt: new Date().toISOString() });
-        const resetLink = `https://${firebaseConfig.authDomain}/__/auth/action?mode=resetPassword&oobCode=demo_code&apiKey=${firebaseConfig.apiKey}`;
-        sendPasswordResetEmail(auth, email).catch(() => {});
+        await sendPasswordResetEmail(auth, email);
 
-        document.getElementById('generated-invite-link').value = resetLink;
         document.getElementById('link-result-box').style.display = 'block';
+        document.getElementById('link-result-box').innerHTML = `
+          <span style="font-size:0.8rem; font-weight:700; color:#1e40af; display:block; margin-bottom:6px;">✅ Invite Sent Successfully!</span>
+          <p style="font-size:0.8rem; color:#1e3a8a; margin:0;">A real password setup email has been dispatched to <strong>${email}</strong> via Firebase.</p>
+        `;
       } catch (err) { alert(err.message); }
-    });
-
-    document.getElementById('copy-link-btn').addEventListener('click', () => {
-      const linkInput = document.getElementById('generated-invite-link');
-      linkInput.select();
-      navigator.clipboard.writeText(linkInput.value);
-      alert('Link copied to clipboard!');
     });
 
     document.getElementById('btn-open-batch').addEventListener('click', () => {

@@ -173,7 +173,7 @@
               <option value="Daycare">Daycare</option>
               <option value="Reception">Reception</option>
             </select>
-            <select id="shift-preset" onchange="toggleCustomShift(this.value)">
+            <select id="shift-preset">
               <option value="7am - 4pm">7am - 4pm</option>
               <option value="8am - 5pm">8am - 5pm</option>
               <option value="10am - 7pm">10am - 7pm</option>
@@ -186,20 +186,20 @@
           </div>
         </div>
 
-        <!-- INVITE STAFF MEMBER -->
+        <!-- INVITE STAFF MEMBER (SIMPLIFIED: EMAIL, NAME, DEPARTMENT) -->
         <div style="background: #f8f9fa; padding: 15px; border-radius: 8px;">
-          <h4>Register Staff Profile</h4>
+          <h4>Invite New Staff Member</h4>
           <div style="display: flex; gap: 8px; flex-wrap: wrap;">
-            <input type="text" id="new-staff-uid" placeholder="Firebase User UID">
-            <input type="text" id="new-staff-name" placeholder="Staff Full Name">
-            <select id="new-staff-dept">
+            <input type="email" id="invite-email" placeholder="Staff Email Address">
+            <input type="text" id="invite-name" placeholder="Staff Full Name">
+            <select id="invite-dept">
               <option value="Kennels">Kennels</option>
               <option value="Boarding">Boarding</option>
               <option value="Cattery">Cattery</option>
               <option value="Daycare">Daycare</option>
               <option value="Reception">Reception</option>
             </select>
-            <button id="register-staff-btn">+ Create Profile</button>
+            <button id="send-invite-btn" class="btn-success">Send Invite Email</button>
           </div>
         </div>
       </div>
@@ -209,7 +209,7 @@
 
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-    import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+    import { getAuth, signInWithEmailAndPassword, sendPasswordResetEmail, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
     import { getFirestore, doc, getDoc, setDoc, collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
     const firebaseConfig = {
@@ -235,10 +235,21 @@
         document.getElementById('dashboard').style.display = 'block';
 
         try {
+          // Check if newly logged-in user has pending invite metadata
+          const inviteDoc = await getDoc(doc(db, "invites", user.email.toLowerCase()));
+          if (inviteDoc.exists()) {
+            const inv = inviteDoc.data();
+            await setDoc(doc(db, "users", user.uid), {
+              displayName: inv.displayName,
+              department: inv.department,
+              role: "staff"
+            }, { merge: true });
+          }
+
           const userDoc = await getDoc(doc(db, "users", user.uid));
           if (userDoc.exists()) {
             const userData = userDoc.data();
-            document.getElementById('user-display').innerText = userData.displayName || userData.name;
+            document.getElementById('user-display').innerText = userData.displayName || user.email;
             if (userData.department) {
               document.getElementById('filter-dept').value = userData.department;
             }
@@ -246,12 +257,15 @@
               document.getElementById('admin-view').style.display = 'block';
             }
           }
-        } catch (e) { console.error(e); }
+        } catch (e) {
+          console.error("Auth flow error:", e);
+        }
 
         loadAndRenderCalendar();
       } else {
         document.getElementById('auth-box').style.display = 'block';
         document.getElementById('dashboard').style.display = 'none';
+        document.getElementById('admin-view').style.display = 'none';
       }
     });
 
@@ -264,13 +278,12 @@
       document.getElementById('current-month-label').innerText = 
         currentDate.toLocaleString('default', { month: 'long', year: 'numeric' });
 
-      // Fetch shifts from Firestore for this department
       currentShifts = [];
       try {
         const q = query(collection(db, "shifts"), where("department", "==", dept));
         const querySnapshot = await getDocs(q);
         querySnapshot.forEach((doc) => currentShifts.push(doc.data()));
-      } catch (err) { console.log("Shifts fetch error:", err); }
+      } catch (err) { console.log(err); }
 
       renderGrid(year, month);
     }
@@ -284,14 +297,12 @@
 
       const firstDay = new Date(year, month, 1).getDay();
       const daysInMonth = new Date(year, month + 1, 0).getDate();
-      const startingIndex = (firstDay === 0 ? 6 : firstDay - 1); // Adjust for Monday start
+      const startingIndex = (firstDay === 0 ? 6 : firstDay - 1);
 
-      // Empty padding days
       for (let i = 0; i < startingIndex; i++) {
         grid.innerHTML += `<div class="calendar-day" style="background: #f9f9f9;"></div>`;
       }
 
-      // Populate month days
       for (let day = 1; day <= daysInMonth; day++) {
         const formattedDate = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
         const dayShifts = currentShifts.filter(s => s.date === formattedDate);
@@ -313,7 +324,37 @@
       }
     }
 
-    // MONTH NAVIGATION
+    // SIMPLIFIED INVITE STAFF PROCESS
+    document.getElementById('send-invite-btn').addEventListener('click', async () => {
+      const email = document.getElementById('invite-email').value.trim().toLowerCase();
+      const name = document.getElementById('invite-name').value.trim();
+      const dept = document.getElementById('invite-dept').value;
+
+      if (!email || !name) {
+        alert('Please enter both the email address and full name.');
+        return;
+      }
+
+      try {
+        // Save invite metadata to Firestore
+        await setDoc(doc(db, "invites", email), {
+          displayName: name,
+          department: dept,
+          createdAt: new Date().toISOString()
+        });
+
+        // Trigger Firebase password email so they can log in
+        await sendPasswordResetEmail(auth, email);
+
+        alert(`Invitation sent to ${email}! They will receive an email to create their password and activate their account.`);
+        document.getElementById('invite-email').value = '';
+        document.getElementById('invite-name').value = '';
+      } catch (err) {
+        alert("Error sending invite: " + err.message);
+      }
+    });
+
+    // NAVIGATION & SHIFTS
     document.getElementById('prev-month').addEventListener('click', () => {
       currentDate.setMonth(currentDate.getMonth() - 1);
       loadAndRenderCalendar();
@@ -324,7 +365,10 @@
     });
     document.getElementById('filter-dept').addEventListener('change', loadAndRenderCalendar);
 
-    // SAVE SHIFT TO FIRESTORE
+    document.getElementById('shift-preset').addEventListener('change', (e) => {
+      document.getElementById('shift-custom').style.display = e.target.value === 'CUSTOM' ? 'inline-block' : 'none';
+    });
+
     document.getElementById('save-shift-btn').addEventListener('click', async () => {
       const staffName = document.getElementById('shift-staff-name').value;
       const date = document.getElementById('shift-date').value;
@@ -334,7 +378,7 @@
 
       const shiftValue = preset === 'CUSTOM' ? custom : preset;
 
-      if (!staffName || !date) return alert('Please enter staff name and date.');
+      if (!staffName || !date) return alert('Enter staff name and date.');
 
       const shiftId = `${date}_${staffName.replace(/\s+/g, '')}`;
       await setDoc(doc(db, "shifts", shiftId), {
@@ -344,25 +388,8 @@
         shift: shiftValue
       });
 
-      alert('Shift assigned successfully!');
+      alert('Shift assigned!');
       loadAndRenderCalendar();
-    });
-
-    // REGISTER STAFF PROFILE
-    document.getElementById('register-staff-btn').addEventListener('click', async () => {
-      const uid = document.getElementById('new-staff-uid').value;
-      const name = document.getElementById('new-staff-name').value;
-      const dept = document.getElementById('new-staff-dept').value;
-
-      if (!uid || !name) return alert('Fill in all fields.');
-
-      await setDoc(doc(db, "users", uid), {
-        displayName: name,
-        department: dept,
-        role: "staff"
-      });
-
-      alert(`Staff record created for ${name}!`);
     });
 
     // AUTH HANDLERS
@@ -373,11 +400,12 @@
         document.getElementById('error-msg').innerText = err.message;
       });
     });
+
     document.getElementById('logout-btn').addEventListener('click', () => signOut(auth));
 
-    window.toggleCustomShift = function(val) {
-      document.getElementById('shift-custom').style.display = val === 'CUSTOM' ? 'inline-block' : 'none';
-    };
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('./sw.js').catch(() => {});
+    }
   </script>
 </body>
 </html>

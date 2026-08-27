@@ -39,7 +39,7 @@
       padding: 32px;
       background: #ffffff;
       border-radius: var(--radius);
-      box-shadow: 0 20px 25px -5px rgba(0,0,0,0.05), 0 8px 10px -6px rgba(0,0,0,0.01);
+      box-shadow: 0 20px 25px -5px rgba(0,0,0,0.05);
       border: 1px solid var(--border-color);
       width: 90%;
     }
@@ -241,9 +241,9 @@
 
     .drawer {
       position: fixed;
-      right: -420px;
+      right: -480px;
       top: 0;
-      width: 400px;
+      width: 440px;
       height: 100vh;
       background: #ffffff;
       box-shadow: -10px 0 25px rgba(0,0,0,0.05);
@@ -251,6 +251,7 @@
       z-index: 200;
       transition: right 0.3s ease;
       padding: 32px;
+      overflow-y: auto;
     }
 
     .drawer.open { right: 0; }
@@ -309,12 +310,39 @@
       max-width: 440px;
     }
 
+    /* BATCH BUILDER DATE GRID */
+    .date-selector-grid {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 4px;
+      margin-top: 8px;
+    }
+
+    .date-chip {
+      padding: 8px 4px;
+      text-align: center;
+      font-size: 0.8rem;
+      font-weight: 600;
+      background: #f1f5f9;
+      border-radius: 6px;
+      cursor: pointer;
+      border: 1px solid var(--border-color);
+      user-select: none;
+    }
+
+    .date-chip.selected {
+      background: var(--primary);
+      color: white;
+      border-color: var(--primary);
+    }
+
     @media (max-width: 768px) {
       body { flex-direction: column; }
       .sidebar { width: 100%; height: auto; position: relative; }
       .main-wrapper { margin-left: 0; width: 100%; padding: 16px; }
       .calendar-grid { grid-template-columns: repeat(1, 1fr); }
       .day-header { display: none; }
+      .drawer { width: 100%; right: -100%; }
     }
   </style>
 </head>
@@ -359,7 +387,8 @@
         <button class="nav-btn" id="btn-view-account">👤 My Account</button>
 
         <div id="admin-sidebar-options" style="display: none;">
-          <span class="menu-label" style="margin-top: 16px;">Admin Controls</span>
+          <span class="menu-label" style="margin-top: 16px;">Admin Tools</span>
+          <button class="nav-btn" id="btn-open-batch">⚡ Monthly Batch Builder</button>
           <button class="nav-btn" id="btn-open-add-staff">➕ Add Staff Member</button>
         </div>
       </div>
@@ -418,7 +447,43 @@
       </div>
     </div>
 
-    <!-- ADD STAFF DRAWER WITH DIRECT SETUP LINK -->
+    <!-- BATCH SHIFT BUILDER DRAWER -->
+    <div id="batch-drawer" class="drawer">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:24px;">
+        <h3 style="margin:0;">⚡ Monthly Batch Builder</h3>
+        <button class="btn-icon" id="close-batch-btn">✕</button>
+      </div>
+      <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 20px;">
+        Pick a team member, select all the days they are working this month, and assign their shift in one go!
+      </p>
+
+      <div class="input-group">
+        <label>1. Select Staff Member</label>
+        <select id="batch-staff-select">
+          <option value="">-- Choose Team Member --</option>
+        </select>
+      </div>
+
+      <div class="input-group">
+        <label>2. Shift Time / Status</label>
+        <select id="batch-shift-preset">
+          <option value="7am - 4pm">7am - 4pm</option>
+          <option value="8am - 5pm">8am - 5pm</option>
+          <option value="10am - 7pm">10am - 7pm</option>
+          <option value="Day Off">Day Off</option>
+          <option value="Holiday">Holiday</option>
+        </select>
+      </div>
+
+      <div class="input-group">
+        <label>3. Select Days Worked (<span id="batch-month-name"></span>)</label>
+        <div id="batch-date-grid" class="date-selector-grid"></div>
+      </div>
+
+      <button id="batch-save-btn" class="btn-primary" style="margin-top: 20px;">Save All Shifts for Selected Days</button>
+    </div>
+
+    <!-- ADD STAFF DRAWER -->
     <div id="staff-drawer" class="drawer">
       <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:24px;">
         <h3 style="margin:0;">Add New Staff Member</h3>
@@ -444,7 +509,6 @@
       </div>
       <button id="send-invite-btn" class="btn-primary">Generate Invite Link</button>
 
-      <!-- LINK DISPLAY BOX -->
       <div id="link-result-box" style="display:none; margin-top: 20px; padding: 12px; background: #eff6ff; border-radius: 8px; border: 1px solid #bfdbfe;">
         <span style="font-size:0.8rem; font-weight:700; color:#1e40af; display:block; margin-bottom:6px;">✅ Staff Member Created!</span>
         <p style="font-size:0.8rem; color:#1e3a8a; margin:0 0 10px 0;">Copy and send this link directly to the employee so they can set their password:</p>
@@ -453,6 +517,7 @@
       </div>
     </div>
 
+    <!-- SINGLE SHIFT MODAL -->
     <div id="shift-modal" class="modal-overlay">
       <div class="modal-card">
         <h3 style="margin-top:0;">Assign Shift (<span id="modal-date-label"></span>)</h3>
@@ -504,6 +569,7 @@
     let currentShifts = [];
     let deptStaff = [];
     let selectedDate = '';
+    let selectedBatchDays = [];
     let isAdminUser = false;
     let currentUserData = null;
 
@@ -572,6 +638,7 @@
       } catch (err) { console.log(err); }
 
       renderGrid(year, month);
+      populateBatchStaffDropdown();
     }
 
     function renderGrid(year, month) {
@@ -622,6 +689,70 @@
       }
     }
 
+    /* BATCH BUILDER FUNCTIONS */
+    function populateBatchStaffDropdown() {
+      const select = document.getElementById('batch-staff-select');
+      select.innerHTML = '<option value="">-- Choose Team Member --</option>';
+      deptStaff.forEach(name => {
+        select.innerHTML += `<option value="${name}">${name}</option>`;
+      });
+    }
+
+    function renderBatchDateGrid() {
+      const year = currentDate.getFullYear();
+      const month = currentDate.getMonth();
+      const daysInMonth = new Date(year, month + 1, 0).getDate();
+      
+      document.getElementById('batch-month-name').innerText = currentDate.toLocaleString('default', { month: 'short', year: 'numeric' });
+      const grid = document.getElementById('batch-date-grid');
+      grid.innerHTML = '';
+      selectedBatchDays = [];
+
+      for (let d = 1; d <= daysInMonth; d++) {
+        const formattedDate = `${year}-${String(month + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+        const chip = document.createElement('div');
+        chip.className = 'date-chip';
+        chip.innerText = d;
+        chip.dataset.date = formattedDate;
+
+        chip.addEventListener('click', () => {
+          if (chip.classList.contains('selected')) {
+            chip.classList.remove('selected');
+            selectedBatchDays = selectedBatchDays.filter(date => date !== formattedDate);
+          } else {
+            chip.classList.add('selected');
+            selectedBatchDays.push(formattedDate);
+          }
+        });
+
+        grid.appendChild(chip);
+      }
+    }
+
+    document.getElementById('batch-save-btn').addEventListener('click', async () => {
+      const staffName = document.getElementById('batch-staff-select').value;
+      const shiftVal = document.getElementById('batch-shift-preset').value;
+      const dept = document.getElementById('filter-dept').value;
+
+      if (!staffName) return alert('Please select a team member.');
+      if (selectedBatchDays.length === 0) return alert('Please select at least one day.');
+
+      for (const dateStr of selectedBatchDays) {
+        const shiftId = `${dateStr}_${staffName.replace(/\s+/g, '')}`;
+        await setDoc(doc(db, "shifts", shiftId), {
+          staffName: staffName,
+          date: dateStr,
+          department: dept,
+          shift: shiftVal
+        });
+      }
+
+      alert(`Saved ${selectedBatchDays.length} shift(s) for ${staffName}!`);
+      document.getElementById('batch-drawer').classList.remove('open');
+      loadAndRenderCalendar();
+    });
+
+    /* SINGLE SHIFT MODAL */
     function openShiftModal(dateStr) {
       selectedDate = dateStr;
       document.getElementById('modal-date-label').innerText = dateStr;
@@ -681,7 +812,7 @@
       }
     }
 
-    // GENERATE DIRECT INVITE LINK
+    // GENERATE INVITE LINK
     document.getElementById('send-invite-btn').addEventListener('click', async () => {
       const email = document.getElementById('invite-email').value.trim().toLowerCase();
       const name = document.getElementById('invite-name').value.trim();
@@ -691,11 +822,7 @@
 
       try {
         await setDoc(doc(db, "invites", email), { displayName: name, department: dept, createdAt: new Date().toISOString() });
-        
-        // Generate password reset link directly
         const resetLink = `https://${firebaseConfig.authDomain}/__/auth/action?mode=resetPassword&oobCode=demo_code&apiKey=${firebaseConfig.apiKey}`;
-        
-        // Trigger automated email attempt as fallback
         sendPasswordResetEmail(auth, email).catch(() => {});
 
         document.getElementById('generated-invite-link').value = resetLink;
@@ -711,6 +838,14 @@
     });
 
     // UI DRAWERS & CONTROLS
+    document.getElementById('btn-open-batch').addEventListener('click', () => {
+      renderBatchDateGrid();
+      document.getElementById('batch-drawer').classList.add('open');
+    });
+    document.getElementById('close-batch-btn').addEventListener('click', () => {
+      document.getElementById('batch-drawer').classList.remove('open');
+    });
+
     document.getElementById('btn-view-account').addEventListener('click', () => {
       document.getElementById('account-drawer').classList.add('open');
     });

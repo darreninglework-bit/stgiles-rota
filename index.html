@@ -8,15 +8,14 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <style>
     :root {
-      --header-bg: #14171a;
+      --header-bg: #111827;
       --brand-blue: #0ea5e9;
       --brand-olive: #657738;
       --brand-magenta: #db2777;
-      --brand-purple: #7e22ce;
       --brand-plum: #9d174d;
       --border-color: #e5e7eb;
-      --bg-body: #f9fafb;
-      --text-main: #111827;
+      --bg-body: #f8fafc;
+      --text-main: #1f2937;
       --text-muted: #6b7280;
     }
 
@@ -38,75 +37,77 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
-      height: 52px;
-      padding: 0 16px;
-      border-bottom: 1px solid #2d3748;
-      flex-wrap: wrap;
+      height: 60px;
+      padding: 0 20px;
+      border-bottom: 1px solid #1f2937;
+      position: sticky;
+      top: 0;
+      z-index: 200;
     }
 
     .nav-left, .nav-right {
       display: flex;
       align-items: center;
-      gap: 12px;
+      gap: 16px;
     }
 
     .app-brand {
       background: var(--brand-blue);
       color: #fff;
       font-weight: 800;
-      padding: 4px 8px;
-      border-radius: 4px;
-      font-size: 0.8rem;
-      letter-spacing: -0.5px;
+      padding: 6px 10px;
+      border-radius: 6px;
+      font-size: 0.85rem;
+      letter-spacing: -0.3px;
     }
 
     .nav-menu {
       display: flex;
-      gap: 4px;
+      gap: 6px;
     }
 
     .nav-item {
       color: #9ca3af;
       text-decoration: none;
-      font-size: 0.8rem;
+      font-size: 0.85rem;
       font-weight: 600;
-      padding: 6px 8px;
-      border-radius: 4px;
+      padding: 6px 12px;
+      border-radius: 6px;
       cursor: pointer;
+      transition: all 0.15s ease;
     }
 
     .nav-item:hover, .nav-item.active {
       color: #fff;
-      background: rgba(255,255,255,0.08);
+      background: rgba(255,255,255,0.1);
     }
 
     .toolbar {
       background: #ffffff;
-      padding: 10px 16px;
+      padding: 12px 20px;
       display: flex;
       justify-content: space-between;
       align-items: center;
       border-bottom: 1px solid var(--border-color);
-      flex-wrap: wrap;
-      gap: 10px;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.02);
     }
 
     .toolbar-group {
       display: flex;
       align-items: center;
-      gap: 8px;
-      flex-wrap: wrap;
+      gap: 10px;
     }
 
     button, select {
       font-family: inherit;
-      font-size: 0.8rem;
+      font-size: 0.825rem;
       border-radius: 6px;
       border: 1px solid var(--border-color);
-      padding: 6px 10px;
+      padding: 7px 12px;
       background: #fff;
       cursor: pointer;
       font-weight: 500;
+      transition: background 0.1s;
     }
 
     button:hover { background: #f3f4f6; }
@@ -120,11 +121,11 @@
     .btn-action:hover { background: #0284c7; }
 
     main {
-      padding: 16px;
+      padding: 20px;
       flex-grow: 1;
       width: 100%;
-      overflow-x: auto;
-      -webkit-overflow-scrolling: touch;
+      max-width: 1600px;
+      margin: 0 auto;
     }
 
     .view-section {
@@ -134,94 +135,105 @@
       display: block;
     }
 
+    /* PERFECT RESPONSIVE TABLE WRAPPER */
     .rota-wrapper {
       width: 100%;
+      background: #fff;
+      border: 1px solid var(--border-color);
+      border-radius: 10px;
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+      overflow: hidden;
+    }
+
+    .rota-scroll-container {
+      width: 100%;
       overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
     }
 
     .rota-container {
-      background: #fff;
-      border: 1px solid var(--border-color);
-      border-radius: 8px;
-      overflow: hidden;
-      min-width: 900px;
-      box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+      display: table;
+      width: 100%;
+      min-width: 1000px;
+      border-collapse: collapse;
     }
 
     .rota-header-row {
-      display: grid;
-      grid-template-columns: 220px repeat(7, 1fr);
+      display: table-row;
       background: #f8fafc;
-      border-bottom: 1px solid var(--border-color);
-      text-align: center;
+      border-bottom: 2px solid var(--border-color);
     }
 
     .rota-col-head {
-      padding: 10px 4px;
+      display: table-cell;
+      padding: 12px 8px;
       border-right: 1px solid var(--border-color);
-      font-size: 0.75rem;
+      font-size: 0.8rem;
+      text-align: center;
+      vertical-align: middle;
     }
 
     .rota-col-head.title-cell {
+      width: 240px;
       text-align: left;
-      padding-left: 12px;
+      padding-left: 16px;
       font-weight: 700;
       color: #374151;
     }
 
-    .day-name { font-weight: 700; color: #1f2937; }
-    .day-date { color: var(--text-muted); font-size: 0.68rem; }
+    .day-name { font-weight: 700; color: #111827; }
+    .day-date { color: var(--text-muted); font-size: 0.72rem; margin-top: 2px; }
 
     .location-header {
       background: #f1f5f9;
-      padding: 8px 12px;
+      padding: 10px 16px;
       font-weight: 700;
-      font-size: 0.775rem;
+      font-size: 0.825rem;
       color: #334155;
       border-bottom: 1px solid var(--border-color);
       border-top: 1px solid var(--border-color);
       display: flex;
       align-items: center;
-      gap: 8px;
+      gap: 10px;
     }
 
     .rota-row {
-      display: grid;
-      grid-template-columns: 220px repeat(7, 1fr);
+      display: table-row;
       border-bottom: 1px solid var(--border-color);
-      min-height: 76px;
     }
 
     .rota-cell {
+      display: table-cell;
       border-right: 1px solid var(--border-color);
-      padding: 4px;
-      display: flex;
-      flex-direction: column;
-      gap: 3px;
+      padding: 8px;
+      vertical-align: top;
+      height: 85px;
       position: relative;
     }
 
     .rota-cell.staff-info {
+      width: 240px;
       background: #fafafa;
-      padding-left: 12px;
-      justify-content: center;
+      padding-left: 16px;
+      vertical-align: middle;
     }
 
-    .staff-name { font-weight: 600; font-size: 0.8rem; color: #111827; }
-    .staff-dept { font-size: 0.68rem; color: var(--text-muted); }
+    .staff-name { font-weight: 600; font-size: 0.85rem; color: #111827; }
+    .staff-dept { font-size: 0.72rem; color: var(--text-muted); margin-top: 2px; }
 
     .shift-pill {
       background: #e0f2fe;
       border-left: 3px solid var(--brand-blue);
       color: #0369a1;
-      padding: 3px 5px;
+      padding: 5px 8px;
       border-radius: 4px;
-      font-size: 0.7rem;
+      font-size: 0.75rem;
       font-weight: 600;
       display: flex;
       justify-content: space-between;
       align-items: center;
-      word-break: break-all;
+      margin-bottom: 4px;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.02);
     }
 
     .shift-pill.leave {
@@ -238,26 +250,28 @@
     }
 
     .add-shift-trigger {
-      background: none;
+      background: #fff;
       border: 1px dashed #d1d5db;
       color: var(--text-muted);
-      font-size: 0.68rem;
-      padding: 3px;
+      font-size: 0.7rem;
+      padding: 5px;
       border-radius: 4px;
       cursor: pointer;
       width: 100%;
       text-align: center;
-      margin-top: auto;
+      margin-top: 4px;
+      display: block;
     }
     .add-shift-trigger:hover { background: #f3f4f6; color: #111; border-color: #9ca3af; }
 
     .card-panel {
       background: #fff;
       border: 1px solid var(--border-color);
-      border-radius: 8px;
-      padding: 20px;
-      max-width: 800px;
+      border-radius: 10px;
+      padding: 24px;
+      max-width: 850px;
       margin: 0 auto;
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
     }
     .card-panel h3 { margin-top: 0; }
 
@@ -273,19 +287,22 @@
     }
     .auth-box {
       background: #fff;
-      padding: 28px;
-      border-radius: 10px;
+      padding: 32px;
+      border-radius: 12px;
       width: 100%;
-      max-width: 380px;
+      max-width: 400px;
+      box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
     }
-    .input-group { margin-bottom: 12px; }
-    .input-group label { display: block; font-size: 0.75rem; font-weight: 700; margin-bottom: 4px; color: var(--text-muted); }
-    .input-group input, .input-group select, .input-group textarea { width: 100%; padding: 8px 10px; border-radius: 6px; border: 1px solid var(--border-color); font-family: inherit; font-size: 0.825rem; }
+    .input-group { margin-bottom: 14px; }
+    .input-group label { display: block; font-size: 0.75rem; font-weight: 700; margin-bottom: 6px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px;}
+    .input-group input, .input-group select, .input-group textarea { width: 100%; padding: 9px 12px; border-radius: 6px; border: 1px solid var(--border-color); font-family: inherit; font-size: 0.85rem; }
+    .input-group input:focus, .input-group select:focus, .input-group textarea:focus { outline: none; border-color: var(--brand-blue); box-shadow: 0 0 0 3px rgba(14, 165, 233, 0.15); }
 
     .modal-overlay {
       position: fixed;
       inset: 0;
       background: rgba(0,0,0,0.5);
+      backdrop-filter: blur(2px);
       display: none;
       justify-content: center;
       align-items: center;
@@ -294,22 +311,23 @@
     }
     .modal-content {
       background: #fff;
-      padding: 20px;
-      border-radius: 8px;
+      padding: 24px;
+      border-radius: 10px;
       width: 100%;
-      max-width: 360px;
+      max-width: 400px;
+      box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
     }
 
     .staff-table {
       width: 100%;
       border-collapse: collapse;
-      margin-top: 10px;
+      margin-top: 12px;
     }
     .staff-table th, .staff-table td {
-      padding: 10px;
+      padding: 12px;
       text-align: left;
       border-bottom: 1px solid var(--border-color);
-      font-size: 0.825rem;
+      font-size: 0.85rem;
     }
     .staff-table th {
       background: #f8fafc;
@@ -317,30 +335,35 @@
       color: #374151;
     }
 
-    @media (max-width: 640px) {
+    /* Mobile Adaptations */
+    @media (max-width: 768px) {
       header {
         height: auto;
-        padding: 8px 12px;
-        gap: 8px;
-      }
-      .nav-left {
+        padding: 10px 16px;
         flex-direction: column;
         align-items: flex-start;
-        gap: 6px;
-        width: 100%;
+        gap: 10px;
       }
       .nav-right {
         width: 100%;
         justify-content: space-between;
         border-top: 1px solid rgba(255,255,255,0.1);
-        padding-top: 6px;
+        padding-top: 8px;
+      }
+      .nav-menu {
+        flex-wrap: wrap;
+        width: 100%;
       }
       .toolbar {
         flex-direction: column;
         align-items: stretch;
+        gap: 12px;
       }
       .toolbar-group {
         justify-content: space-between;
+      }
+      main {
+        padding: 12px;
       }
     }
   </style>
@@ -349,9 +372,9 @@
 
   <div id="auth-screen">
     <div class="auth-box">
-      <div style="background:var(--brand-blue); color:#fff; display:inline-block; padding:3px 6px; font-weight:800; border-radius:3px; font-size:0.75rem; margin-bottom:12px;">St Giles RotaPlanner</div>
-      <h2 style="margin:0 0 4px 0; font-size:1.15rem;">Sign in</h2>
-      <p style="color:var(--text-muted); font-size:0.8rem; margin-bottom:20px;">Access your team rota dashboard</p>
+      <div style="background:var(--brand-blue); color:#fff; display:inline-block; padding:4px 8px; font-weight:800; border-radius:4px; font-size:0.75rem; margin-bottom:14px; text-transform:uppercase;">St Giles RotaPlanner</div>
+      <h2 style="margin:0 0 6px 0; font-size:1.25rem;">Welcome back</h2>
+      <p style="color:var(--text-muted); font-size:0.825rem; margin-bottom:24px;">Sign in to view your schedule or manage shifts</p>
       <div class="input-group">
         <label>Email Address</label>
         <input type="email" id="login-email" placeholder="name@stgiles.co.uk">
@@ -360,8 +383,8 @@
         <label>Password</label>
         <input type="password" id="login-pass" placeholder="••••••••">
       </div>
-      <button class="btn-action" id="login-submit" style="width:100%; padding:9px;">Sign In</button>
-      <p id="login-error" style="color:#dc2626; font-size:0.75rem; margin-top:10px; font-weight:600;"></p>
+      <button class="btn-action" id="login-submit" style="width:100%; padding:10px; margin-top:6px;">Sign In</button>
+      <p id="login-error" style="color:#dc2626; font-size:0.75rem; margin-top:12px; font-weight:600;"></p>
     </div>
   </div>
 
@@ -370,27 +393,27 @@
       <div class="app-brand">St. Giles Rota</div>
       <div class="nav-menu">
         <a class="nav-item active" id="menu-rota" data-target="view-rota">Rota</a>
-        <a class="nav-item" id="menu-staff" data-target="view-staff" style="display:none;">Manage staff</a>
-        <a class="nav-item" id="menu-leave" data-target="view-leave">Book leave</a>
-        <a class="nav-item" id="menu-calendar" data-target="view-calendar">My calendar</a>
+        <a class="nav-item" id="menu-staff" data-target="view-staff" style="display:none;">Manage Staff</a>
+        <a class="nav-item" id="menu-leave" data-target="view-leave">Book Leave</a>
+        <a class="nav-item" id="menu-calendar" data-target="view-calendar">My Calendar</a>
       </div>
     </div>
     <div class="nav-right">
-      <span id="user-badge" style="font-size:0.75rem; color:#9ca3af;"></span>
-      <button id="logout-btn" style="background:transparent; border:1px solid rgba(255,255,255,0.2); color:#fff; padding:4px 8px; font-size:0.725rem;">Sign out</button>
+      <span id="user-badge" style="font-size:0.775rem; color:#d1d5db; font-weight:500;"></span>
+      <button id="logout-btn" style="background:transparent; border:1px solid rgba(255,255,255,0.25); color:#fff; padding:5px 10px; font-size:0.75rem;">Sign Out</button>
     </div>
   </header>
 
   <div class="toolbar" id="app-toolbar">
     <div class="toolbar-group">
-      <button id="week-prev">◀</button>
-      <span id="week-label" style="font-weight:700; font-size:0.825rem;"></span>
-      <button id="week-next">▶</button>
-      <button id="week-today">Current week</button>
+      <button id="week-prev">◀ Prev</button>
+      <span id="week-label" style="font-weight:700; font-size:0.875rem;"></span>
+      <button id="week-next">Next ▶</button>
+      <button id="week-today">Today</button>
     </div>
     <div class="toolbar-group">
       <div id="admin-controls" style="display:none; gap:8px;">
-        <button class="btn-action" id="btn-add-staff">+ Add staff</button>
+        <button class="btn-action" id="btn-add-staff">+ Add Staff</button>
       </div>
     </div>
   </div>
@@ -398,27 +421,11 @@
   <main>
     <div id="view-rota" class="view-section active">
       <div class="rota-wrapper">
-        <div class="rota-container">
-          <div class="rota-header-row" id="rota-header">
-            <div class="rota-col-head title-cell">Primary location</div>
-          </div>
-
-          <div class="location-header"><span style="width:8px; height:8px; background:var(--brand-olive); display:inline-block; border-radius:50%;"></span> St Giles Animal Centre Operations</div>
-          <div id="rota-staff-rows"></div>
-
-          <div class="location-header" style="background:#fdf2f8; color:var(--brand-plum);"><span style="width:8px; height:8px; background:var(--brand-magenta); display:inline-block; border-radius:50%;"></span> Staff leave</div>
-          <div class="rota-row" id="leave-summary-row">
-            <div class="rota-cell staff-info">
-              <div class="staff-name" style="color:var(--brand-plum);">Approved Time Off</div>
-              <div class="staff-dept">Leave / Holidays</div>
+        <div class="rota-scroll-container">
+          <div class="rota-container" id="rota-main-table">
+            <div class="rota-header-row" id="rota-header">
+              <div class="rota-col-head title-cell">Primary Location</div>
             </div>
-            <div class="rota-cell"></div>
-            <div class="rota-cell"></div>
-            <div class="rota-cell"></div>
-            <div class="rota-cell"></div>
-            <div class="rota-cell"></div>
-            <div class="rota-cell"></div>
-            <div class="rota-cell"></div>
           </div>
         </div>
       </div>
@@ -426,12 +433,12 @@
 
     <div id="view-staff" class="view-section">
       <div class="card-panel">
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; flex-wrap:wrap; gap:10px;">
           <div>
             <h3 style="margin:0;">Staff Directory</h3>
-            <p style="color:var(--text-muted); font-size:0.8rem; margin:2px 0 0 0;">Manage team members and accounts.</p>
+            <p style="color:var(--text-muted); font-size:0.825rem; margin:2px 0 0 0;">Manage permissions, department assignment, and team records.</p>
           </div>
-          <button class="btn-action" id="btn-add-staff-directory">+ Add Staff</button>
+          <button class="btn-action" id="btn-add-staff-directory">+ Add New Staff</button>
         </div>
         <div style="overflow-x:auto;">
           <table class="staff-table">
@@ -454,7 +461,7 @@
     <div id="view-leave" class="view-section">
       <div class="card-panel">
         <h3>Request Time Off / Leave</h3>
-        <p style="color:var(--text-muted); font-size:0.825rem; margin-bottom:20px;">Submit your holiday or leave dates for management approval.</p>
+        <p style="color:var(--text-muted); font-size:0.85rem; margin-bottom:20px;">Submit your holiday or leave dates for management schedule updates.</p>
         <div class="input-group">
           <label>Start Date</label>
           <input type="date" id="leave-start">
@@ -480,9 +487,9 @@
     </div>
 
     <div id="view-calendar" class="view-section">
-      <div class="card-panel" style="max-width: 800px;">
+      <div class="card-panel">
         <h3>My Scheduled Shifts & Leave</h3>
-        <p style="color:var(--text-muted); font-size:0.825rem; margin-bottom:20px;">Your personal timeline of upcoming work schedules.</p>
+        <p style="color:var(--text-muted); font-size:0.85rem; margin-bottom:20px;">Your personal timeline of upcoming work schedules and assignments.</p>
         <div id="personal-calendar-list" style="display:flex; flex-direction:column; gap:10px;">
           </div>
       </div>
@@ -491,7 +498,7 @@
 
   <div id="modal-shift" class="modal-overlay">
     <div class="modal-content">
-      <h3 style="margin-top:0; font-size:0.95rem;">Assign Shift</h3>
+      <h3 style="margin-top:0; font-size:1rem;">Assign Shift / Status</h3>
       <div class="input-group">
         <label>Staff Member</label>
         <select id="modal-shift-staff"></select>
@@ -507,16 +514,16 @@
           <option value="Draft Member">Draft Member</option>
         </select>
       </div>
-      <div style="display:flex; gap:8px; margin-top:16px;">
+      <div style="display:flex; gap:10px; margin-top:20px;">
         <button id="modal-shift-cancel" style="width:50%;">Cancel</button>
-        <button class="btn-action" id="modal-shift-save" style="width:50%;">Save</button>
+        <button class="btn-action" id="modal-shift-save" style="width:50%;">Save Shift</button>
       </div>
     </div>
   </div>
 
   <div id="modal-staff" class="modal-overlay">
     <div class="modal-content">
-      <h3 style="margin-top:0; font-size:0.95rem;" id="modal-staff-title">Add New Staff Member</h3>
+      <h3 style="margin-top:0; font-size:1rem;" id="modal-staff-title">Add New Staff Member</h3>
       <input type="hidden" id="edit-staff-id">
       <div class="input-group">
         <label>Full Name</label>
@@ -543,9 +550,9 @@
           <option value="admin">Administrator</option>
         </select>
       </div>
-      <div style="display:flex; gap:8px; margin-top:16px;">
+      <div style="display:flex; gap:10px; margin-top:20px;">
         <button id="modal-staff-cancel" style="width:50%;">Cancel</button>
-        <button class="btn-action" id="modal-staff-save" style="width:50%;">Save</button>
+        <button class="btn-action" id="modal-staff-save" style="width:50%;">Save Record</button>
       </div>
     </div>
   </div>
@@ -647,8 +654,14 @@
     }
 
     function renderDashboardGrid() {
-      const headerRow = document.getElementById('rota-header');
-      while (headerRow.children.length > 1) { headerRow.removeChild(headerRow.lastChild); }
+      const container = document.getElementById('rota-main-table');
+      container.innerHTML = '';
+
+      // Header row
+      const headerRow = document.createElement('div');
+      headerRow.className = 'rota-header-row';
+      headerRow.id = 'rota-header';
+      headerRow.innerHTML = `<div class="rota-col-head title-cell">Primary Location</div>`;
 
       let weekDays = [];
       let iterator = new Date(activeMonday);
@@ -663,12 +676,17 @@
 
         iterator.setDate(iterator.getDate() + 1);
       }
+      container.appendChild(headerRow);
 
       document.getElementById('week-label').innerText = `${weekDays[0].dayNum} ${new Date(activeMonday).toLocaleDateString('en-GB', {month:'short'})} - ${weekDays[6].dayNum} ${new Date(iterator-1).toLocaleDateString('en-GB', {month:'short'})}`;
 
-      const rowsContainer = document.getElementById('rota-staff-rows');
-      rowsContainer.innerHTML = '';
+      // Section 1: Operations Header
+      let opHeader = document.createElement('div');
+      opHeader.className = 'location-header';
+      opHeader.innerHTML = `<span style="width:9px; height:9px; background:var(--brand-olive); display:inline-block; border-radius:50%;"></span> St Giles Animal Centre Operations`;
+      container.appendChild(opHeader);
 
+      // Staff Rows
       staffList.forEach(staff => {
         let tr = document.createElement('div');
         tr.className = 'rota-row';
@@ -691,7 +709,7 @@
             dayCell.innerHTML = `
               <div class="${pillClass}">
                 <span>${matched.shift}</span>
-                ${currentUser.role === 'admin' ? `<span onclick="window.removeShift('${matched.id}')" style="cursor:pointer; font-weight:bold; margin-left:4px;" title="Delete shift">×</span>` : ''}
+                ${currentUser.role === 'admin' ? `<span onclick="window.removeShift('${matched.id}')" style="cursor:pointer; font-weight:bold; margin-left:6px;" title="Delete shift">×</span>` : ''}
               </div>`;
           }
 
@@ -711,15 +729,33 @@
           tr.appendChild(dayCell);
         });
 
-        rowsContainer.appendChild(tr);
+        container.appendChild(tr);
       });
 
-      const leaveSlots = document.querySelectorAll('#leave-summary-row .rota-cell:not(.staff-info)');
-      leaveSlots.forEach((slot, idx) => {
-        let wd = weekDays[idx];
+      // Section 2: Leave Summary Header & Row
+      let leaveHeader = document.createElement('div');
+      leaveHeader.className = 'location-header';
+      leaveHeader.style.cssText = "background:#fdf2f8; color:var(--brand-plum); border-top:2px solid var(--border-color);";
+      leaveHeader.innerHTML = `<span style="width:9px; height:9px; background:var(--brand-magenta); display:inline-block; border-radius:50%;"></span> Staff Leave & Time Off Summary`;
+      container.appendChild(leaveHeader);
+
+      let leaveRow = document.createElement('div');
+      leaveRow.className = 'rota-row';
+      
+      let leaveInfoCell = document.createElement('div');
+      leaveInfoCell.className = 'rota-cell staff-info';
+      leaveInfoCell.innerHTML = `<div class="staff-name" style="color:var(--brand-plum);">Approved Time Off</div><div class="staff-dept">Leave / Holidays</div>`;
+      leaveRow.appendChild(leaveInfoCell);
+
+      weekDays.forEach(wd => {
+        let leaveCell = document.createElement('div');
+        leaveCell.className = 'rota-cell';
         let dayLeaves = shiftList.filter(s => s.date === wd.dateStr && (s.shift.includes('Leave') || s.shift.includes('Holiday') || s.shift.includes('Off')));
-        slot.innerHTML = dayLeaves.map(l => `<div class="shift-pill leave"><strong>${l.staffName}</strong>: ${l.shift}</div>`).join('');
+        leaveCell.innerHTML = dayLeaves.map(l => `<div class="shift-pill leave"><strong>${l.staffName}</strong>: ${l.shift}</div>`).join('');
+        leaveRow.appendChild(leaveCell);
       });
+
+      container.appendChild(leaveRow);
     }
 
     function renderStaffDirectory() {
@@ -729,10 +765,10 @@
           <td><strong>${s.displayName}</strong></td>
           <td>${s.email}</td>
           <td>${s.department || 'General'}</td>
-          <td><span style="background:${s.role === 'admin' ? '#e0f2fe' : '#f3f4f6'}; color:${s.role === 'admin' ? '#0369a1' : '#374151'}; padding:2px 6px; border-radius:4px; font-size:0.75rem; font-weight:600;">${s.role}</span></td>
+          <td><span style="background:${s.role === 'admin' ? '#e0f2fe' : '#f3f4f6'}; color:${s.role === 'admin' ? '#0369a1' : '#374151'}; padding:3px 8px; border-radius:4px; font-size:0.75rem; font-weight:600;">${s.role}</span></td>
           <td>
-            <button onclick="window.editStaff('${s.id}')" style="padding:4px 8px; font-size:0.75rem; margin-right:4px;">Edit</button>
-            <button onclick="window.removeStaff('${s.id}', '${s.displayName}')" style="padding:4px 8px; font-size:0.75rem; background:#fee2e2; color:#b91c1c; border-color:#fca5a5;">Delete</button>
+            <button onclick="window.editStaff('${s.id}')" style="padding:5px 10px; font-size:0.775rem; margin-right:4px;">Edit</button>
+            <button onclick="window.removeStaff('${s.id}', '${s.displayName}')" style="padding:5px 10px; font-size:0.775rem; background:#fee2e2; color:#b91c1c; border-color:#fca5a5;">Delete</button>
           </td>
         </tr>
       `).join('');
@@ -745,7 +781,7 @@
       document.getElementById('edit-staff-id').value = staff.id;
       document.getElementById('new-name').value = staff.displayName;
       document.getElementById('new-email').value = staff.email;
-      document.getElementById('new-email').disabled = true; // Auth emails cannot be arbitrarily changed here easily
+      document.getElementById('new-email').disabled = true;
       document.getElementById('new-dept').value = staff.department || 'Rescue Team';
       document.getElementById('new-role').value = staff.role || 'staff';
       document.getElementById('modal-staff').style.display = 'flex';
@@ -868,12 +904,12 @@
       }
 
       container.innerHTML = userShifts.map(s => `
-        <div style="display:flex; justify-content:space-between; align-items:center; padding:12px; background:#f9fafb; border:1px solid var(--border-color); border-radius:6px;">
+        <div style="display:flex; justify-content:space-between; align-items:center; padding:12px 16px; background:#f9fafb; border:1px solid var(--border-color); border-radius:6px;">
           <div>
             <div style="font-weight:600; font-size:0.85rem;">${new Date(s.date).toLocaleDateString('en-GB', {weekday: 'long', day: 'numeric', month: 'long', year: 'numeric'})}</div>
             <div style="font-size:0.75rem; color:var(--text-muted); margin-top:2px;">Scheduled Entry</div>
           </div>
-          <div style="background:#e0f2fe; color:#0369a1; padding:4px 10px; border-radius:4px; font-weight:600; font-size:0.80rem;">
+          <div style="background:#e0f2fe; color:#0369a1; padding:5px 12px; border-radius:4px; font-weight:600; font-size:0.80rem;">
             ${s.shift}
           </div>
         </div>

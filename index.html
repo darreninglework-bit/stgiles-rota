@@ -256,7 +256,7 @@
       border: 1px solid var(--border-color);
       border-radius: 8px;
       padding: 20px;
-      max-width: 600px;
+      max-width: 800px;
       margin: 0 auto;
     }
     .card-panel h3 { margin-top: 0; }
@@ -298,6 +298,23 @@
       border-radius: 8px;
       width: 100%;
       max-width: 360px;
+    }
+
+    .staff-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 10px;
+    }
+    .staff-table th, .staff-table td {
+      padding: 10px;
+      text-align: left;
+      border-bottom: 1px solid var(--border-color);
+      font-size: 0.825rem;
+    }
+    .staff-table th {
+      background: #f8fafc;
+      font-weight: 700;
+      color: #374151;
     }
 
     @media (max-width: 640px) {
@@ -353,6 +370,7 @@
       <div class="app-brand">St. Giles Rota</div>
       <div class="nav-menu">
         <a class="nav-item active" id="menu-rota" data-target="view-rota">Rota</a>
+        <a class="nav-item" id="menu-staff" data-target="view-staff" style="display:none;">Manage staff</a>
         <a class="nav-item" id="menu-leave" data-target="view-leave">Book leave</a>
         <a class="nav-item" id="menu-calendar" data-target="view-calendar">My calendar</a>
       </div>
@@ -402,6 +420,33 @@
             <div class="rota-cell"></div>
             <div class="rota-cell"></div>
           </div>
+        </div>
+      </div>
+    </div>
+
+    <div id="view-staff" class="view-section">
+      <div class="card-panel">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
+          <div>
+            <h3 style="margin:0;">Staff Directory</h3>
+            <p style="color:var(--text-muted); font-size:0.8rem; margin:2px 0 0 0;">Manage team members and accounts.</p>
+          </div>
+          <button class="btn-action" id="btn-add-staff-directory">+ Add Staff</button>
+        </div>
+        <div style="overflow-x:auto;">
+          <table class="staff-table">
+            <thead>
+              <tr>
+                <th>Name</th>
+                <th>Email</th>
+                <th>Department</th>
+                <th>Role</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="staff-directory-body">
+              </tbody>
+          </table>
         </div>
       </div>
     </div>
@@ -471,7 +516,8 @@
 
   <div id="modal-staff" class="modal-overlay">
     <div class="modal-content">
-      <h3 style="margin-top:0; font-size:0.95rem;">Add New Staff Member</h3>
+      <h3 style="margin-top:0; font-size:0.95rem;" id="modal-staff-title">Add New Staff Member</h3>
+      <input type="hidden" id="edit-staff-id">
       <div class="input-group">
         <label>Full Name</label>
         <input type="text" id="new-name" placeholder="Jane Doe">
@@ -490,9 +536,16 @@
           <option value="Supervisor/Manager">Supervisor/Manager</option>
         </select>
       </div>
+      <div class="input-group">
+        <label>System Role</label>
+        <select id="new-role">
+          <option value="staff">Staff Member</option>
+          <option value="admin">Administrator</option>
+        </select>
+      </div>
       <div style="display:flex; gap:8px; margin-top:16px;">
         <button id="modal-staff-cancel" style="width:50%;">Cancel</button>
-        <button class="btn-action" id="modal-staff-save" style="width:50%;">Create Staff</button>
+        <button class="btn-action" id="modal-staff-save" style="width:50%;">Save</button>
       </div>
     </div>
   </div>
@@ -500,7 +553,7 @@
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
     import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
-    import { getFirestore, collection, doc, getDoc, setDoc, deleteDoc, getDocs } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+    import { getFirestore, collection, doc, getDoc, setDoc, updateDoc, deleteDoc, getDocs } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
     const firebaseConfig = {
       apiKey: "AIzaSyCpKVdl5bsAL9wOEES7vr6-B-8kAEv_fLA",
@@ -543,6 +596,8 @@
 
         if(targetView === 'view-calendar') {
           renderPersonalCalendar();
+        } else if(targetView === 'view-staff') {
+          renderStaffDirectory();
         }
       };
     });
@@ -559,6 +614,7 @@
 
         const isAdmin = currentUser.role === 'admin';
         document.getElementById('admin-controls').style.display = isAdmin ? 'flex' : 'none';
+        document.getElementById('menu-staff').style.display = isAdmin ? 'block' : 'none';
         document.getElementById('user-badge').innerText = `${currentUser.displayName} (${currentUser.role})`;
 
         if(isAdmin) {
@@ -585,6 +641,9 @@
       } catch(e) { console.error(e); }
 
       renderDashboardGrid();
+      if(document.getElementById('view-staff').classList.contains('active')) {
+        renderStaffDirectory();
+      }
     }
 
     function renderDashboardGrid() {
@@ -663,6 +722,46 @@
       });
     }
 
+    function renderStaffDirectory() {
+      const tbody = document.getElementById('staff-directory-body');
+      tbody.innerHTML = staffList.map(s => `
+        <tr>
+          <td><strong>${s.displayName}</strong></td>
+          <td>${s.email}</td>
+          <td>${s.department || 'General'}</td>
+          <td><span style="background:${s.role === 'admin' ? '#e0f2fe' : '#f3f4f6'}; color:${s.role === 'admin' ? '#0369a1' : '#374151'}; padding:2px 6px; border-radius:4px; font-size:0.75rem; font-weight:600;">${s.role}</span></td>
+          <td>
+            <button onclick="window.editStaff('${s.id}')" style="padding:4px 8px; font-size:0.75rem; margin-right:4px;">Edit</button>
+            <button onclick="window.removeStaff('${s.id}', '${s.displayName}')" style="padding:4px 8px; font-size:0.75rem; background:#fee2e2; color:#b91c1c; border-color:#fca5a5;">Delete</button>
+          </td>
+        </tr>
+      `).join('');
+    }
+
+    window.editStaff = function(id) {
+      const staff = staffList.find(s => s.id === id);
+      if(!staff) return;
+      document.getElementById('modal-staff-title').innerText = 'Edit Staff Member';
+      document.getElementById('edit-staff-id').value = staff.id;
+      document.getElementById('new-name').value = staff.displayName;
+      document.getElementById('new-email').value = staff.email;
+      document.getElementById('new-email').disabled = true; // Auth emails cannot be arbitrarily changed here easily
+      document.getElementById('new-dept').value = staff.department || 'Rescue Team';
+      document.getElementById('new-role').value = staff.role || 'staff';
+      document.getElementById('modal-staff').style.display = 'flex';
+    };
+
+    window.removeStaff = async function(id, name) {
+      if(confirm(`Are you sure you want to delete staff account for ${name}?`)) {
+        try {
+          await deleteDoc(doc(db, "users", id));
+          loadDatabaseData();
+        } catch(e) {
+          alert('Error deleting staff: ' + e.message);
+        }
+      }
+    };
+
     window.removeShift = async function(id) {
       if(confirm('Delete this shift entry?')) {
         await deleteDoc(doc(db, "shifts", id));
@@ -681,18 +780,39 @@
       loadDatabaseData();
     };
 
-    document.getElementById('btn-add-staff').onclick = () => document.getElementById('modal-staff').style.display = 'flex';
+    const openAddStaffModal = () => {
+      document.getElementById('modal-staff-title').innerText = 'Add New Staff Member';
+      document.getElementById('edit-staff-id').value = '';
+      document.getElementById('new-name').value = '';
+      document.getElementById('new-email').value = '';
+      document.getElementById('new-email').disabled = false;
+      document.getElementById('new-dept').value = 'Rescue Team';
+      document.getElementById('new-role').value = 'staff';
+      document.getElementById('modal-staff').style.display = 'flex';
+    };
+
+    document.getElementById('btn-add-staff').onclick = openAddStaffModal;
+    document.getElementById('btn-add-staff-directory').onclick = openAddStaffModal;
+
     document.getElementById('modal-staff-cancel').onclick = () => document.getElementById('modal-staff').style.display = 'none';
+    
     document.getElementById('modal-staff-save').onclick = async () => {
+      const editId = document.getElementById('edit-staff-id').value;
       const name = document.getElementById('new-name').value.trim();
       const email = document.getElementById('new-email').value.trim().toLowerCase();
       const dept = document.getElementById('new-dept').value;
+      const role = document.getElementById('new-role').value;
 
       if(!name || !email) return alert('Please enter name and email.');
       try {
-        const cred = await createUserWithEmailAndPassword(auth, email, "StGiles2026!");
-        await setDoc(doc(db, "users", cred.user.uid), { displayName: name, email, department: dept, role: 'staff' });
-        alert(`Staff account created for ${name}! Temp Password: StGiles2026!`);
+        if(editId) {
+          await updateDoc(doc(db, "users", editId), { displayName: name, department: dept, role: role });
+          alert(`Staff profile updated for ${name}!`);
+        } else {
+          const cred = await createUserWithEmailAndPassword(auth, email, "StGiles2026!");
+          await setDoc(doc(db, "users", cred.user.uid), { displayName: name, email, department: dept, role: role });
+          alert(`Staff account created for ${name}! Temp Password: StGiles2026!`);
+        }
         document.getElementById('modal-staff').style.display = 'none';
         loadDatabaseData();
       } catch(e) {

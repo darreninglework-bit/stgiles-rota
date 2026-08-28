@@ -218,6 +218,13 @@
       color: #be185d;
     }
 
+    .shift-pill.draft {
+      background: #fef3c7;
+      border-left-color: #f59e0b;
+      color: #92400e;
+      border: 1px dashed #f59e0b;
+    }
+
     .add-shift-trigger {
       background: none;
       border: 1px dashed #d1d5db;
@@ -232,7 +239,6 @@
     }
     .add-shift-trigger:hover { background: #f3f4f6; color: #111; border-color: #9ca3af; }
 
-    /* Forms & Containers for Leave / Calendar views */
     .card-panel {
       background: #fff;
       border: 1px solid var(--border-color);
@@ -283,7 +289,6 @@
 </head>
 <body>
 
-  <!-- LOGIN SCREEN -->
   <div id="auth-screen">
     <div class="auth-box">
       <div style="background:var(--brand-blue); color:#fff; display:inline-block; padding:3px 6px; font-weight:800; border-radius:3px; font-size:0.75rem; margin-bottom:12px;">St Giles RotaPlanner</div>
@@ -302,7 +307,6 @@
     </div>
   </div>
 
-  <!-- TOP APP HEADER -->
   <header>
     <div class="nav-left">
       <div class="app-brand">St. Giles Rota</div>
@@ -318,7 +322,6 @@
     </div>
   </header>
 
-  <!-- TOOLBAR -->
   <div class="toolbar" id="app-toolbar">
     <div class="toolbar-group">
       <button id="week-prev">◀</button>
@@ -333,9 +336,7 @@
     </div>
   </div>
 
-  <!-- MAIN VIEWS CONTAINER -->
   <main>
-    <!-- ROTA VIEW -->
     <div id="view-rota" class="view-section active">
       <div class="rota-container">
         <div class="rota-header-row" id="rota-header">
@@ -362,7 +363,6 @@
       </div>
     </div>
 
-    <!-- BOOK LEAVE VIEW -->
     <div id="view-leave" class="view-section">
       <div class="card-panel">
         <h3>Request Time Off / Leave</h3>
@@ -391,19 +391,16 @@
       </div>
     </div>
 
-    <!-- MY CALENDAR VIEW -->
     <div id="view-calendar" class="view-section">
       <div class="card-panel" style="max-width: 800px;">
         <h3>My Scheduled Shifts & Leave</h3>
         <p style="color:var(--text-muted); font-size:0.825rem; margin-bottom:20px;">Your personal timeline of upcoming work schedules.</p>
         <div id="personal-calendar-list" style="display:flex; flex-direction:column; gap:10px;">
-          <!-- Populated dynamically -->
-        </div>
+          </div>
       </div>
     </div>
   </main>
 
-  <!-- ADD SHIFT MODAL -->
   <div id="modal-shift" class="modal-overlay">
     <div class="modal-content">
       <h3 style="margin-top:0; font-size:0.95rem;">Assign Shift</h3>
@@ -419,6 +416,7 @@
           <option value="10am - 7pm">10am - 7pm</option>
           <option value="Day Off">Day Off</option>
           <option value="Holiday / Leave">Holiday / Leave</option>
+          <option value="Draft Member">Draft Member</option>
         </select>
       </div>
       <div style="display:flex; gap:8px; margin-top:16px;">
@@ -428,7 +426,6 @@
     </div>
   </div>
 
-  <!-- ADD STAFF MODAL -->
   <div id="modal-staff" class="modal-overlay">
     <div class="modal-content">
       <h3 style="margin-top:0; font-size:0.95rem;">Add New Staff Member</h3>
@@ -488,20 +485,17 @@
       return new Date(d.setDate(diff));
     }
 
-    // Navigation tab switching logic
     document.querySelectorAll('.nav-menu .nav-item').forEach(item => {
       item.onclick = (e) => {
         e.preventDefault();
         const targetView = item.getAttribute('data-target');
         
-        // Block admin from leave booking view if desired, or let them switch seamlessly
         document.querySelectorAll('.nav-menu .nav-item').forEach(nav => nav.classList.remove('active'));
         item.classList.add('active');
 
         document.querySelectorAll('.view-section').forEach(sec => sec.classList.remove('active'));
         document.getElementById(targetView).classList.add('active');
 
-        // Hide toolbar date controls if not on the main Rota view
         document.getElementById('app-toolbar').style.display = (targetView === 'view-rota') ? 'flex' : 'none';
 
         if(targetView === 'view-calendar') {
@@ -524,9 +518,10 @@
         document.getElementById('admin-controls').style.display = isAdmin ? 'flex' : 'none';
         document.getElementById('user-badge').innerText = `${currentUser.displayName} (${currentUser.role})`;
 
-        // If admin, hide the "Book leave" navigation item completely
         if(isAdmin) {
           document.getElementById('menu-leave').style.display = 'none';
+        } else {
+          document.getElementById('menu-leave').style.display = 'block';
         }
 
         loadDatabaseData();
@@ -588,8 +583,11 @@
           let matched = shiftList.find(s => s.staffName === staff.displayName && s.date === wd.dateStr);
           if (matched) {
             let isLeave = matched.shift.includes('Leave') || matched.shift.includes('Holiday') || matched.shift.includes('Off');
+            let isDraft = matched.shift.includes('Draft');
+            let pillClass = isDraft ? 'shift-pill draft' : (isLeave ? 'shift-pill leave' : 'shift-pill');
+            
             dayCell.innerHTML = `
-              <div class="shift-pill ${isLeave ? 'leave' : ''}">
+              <div class="${pillClass}">
                 <span>${matched.shift}</span>
                 ${currentUser.role === 'admin' ? `<span onclick="window.removeShift('${matched.id}')" style="cursor:pointer; font-weight:bold; margin-left:4px;" title="Delete shift">×</span>` : ''}
               </div>`;
@@ -629,7 +627,6 @@
       }
     }
 
-    // Modal Actions
     document.getElementById('modal-shift-cancel').onclick = () => document.getElementById('modal-shift').style.display = 'none';
     document.getElementById('modal-shift-save').onclick = async () => {
       const staffName = document.getElementById('modal-shift-staff').value;
@@ -660,7 +657,6 @@
       }
     };
 
-    // Leave booking button submission handler
     document.getElementById('submit-leave-btn').onclick = async () => {
       const start = document.getElementById('leave-start').value;
       const end = document.getElementById('leave-end').value;
@@ -689,7 +685,6 @@
         document.getElementById('leave-end').value = '';
         document.getElementById('leave-notes').value = '';
         loadDatabaseData();
-        // Switch back to rota view automatically
         document.getElementById('menu-rota').click();
       } catch(e) {
         alert('Error submitting leave: ' + e.message);
@@ -715,7 +710,7 @@
             <div style="font-weight:600; font-size:0.85rem;">${new Date(s.date).toLocaleDateString('en-GB', {weekday: 'long', day: 'numeric', month: 'long', year: 'numeric'})}</div>
             <div style="font-size:0.75rem; color:var(--text-muted); margin-top:2px;">Scheduled Entry</div>
           </div>
-          <div style="background:#e0f2fe; color:#0369a1; padding:4px 10px; border-radius:4px; font-weight:600; font-size:0.8rem;">
+          <div style="background:#e0f2fe; color:#0369a1; padding:4px 10px; border-radius:4px; font-weight:600; font-size:0.80rem;">
             ${s.shift}
           </div>
         </div>

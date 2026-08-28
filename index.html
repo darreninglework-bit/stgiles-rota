@@ -32,7 +32,6 @@
       min-height: 100vh;
     }
 
-    /* Top Application Bar */
     header {
       background: var(--header-bg);
       color: #fff;
@@ -80,7 +79,6 @@
       background: rgba(255,255,255,0.08);
     }
 
-    /* Sub-header Toolbar */
     .toolbar {
       background: #ffffff;
       padding: 10px 20px;
@@ -117,11 +115,17 @@
     }
     .btn-action:hover { background: #0284c7; }
 
-    /* Rota Grid View Container */
     main {
       padding: 20px;
       flex-grow: 1;
       overflow-x: auto;
+    }
+
+    .view-section {
+      display: none;
+    }
+    .view-section.active {
+      display: block;
     }
 
     .rota-container {
@@ -228,7 +232,17 @@
     }
     .add-shift-trigger:hover { background: #f3f4f6; color: #111; border-color: #9ca3af; }
 
-    /* Login Screen */
+    /* Forms & Containers for Leave / Calendar views */
+    .card-panel {
+      background: #fff;
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      padding: 24px;
+      max-width: 600px;
+      margin: 0 auto;
+    }
+    .card-panel h3 { margin-top: 0; }
+
     #auth-screen {
       position: fixed;
       inset: 0;
@@ -247,9 +261,8 @@
     }
     .input-group { margin-bottom: 14px; }
     .input-group label { display: block; font-size: 0.75rem; font-weight: 700; margin-bottom: 5px; color: var(--text-muted); }
-    .input-group input { width: 100%; padding: 8px 10px; border-radius: 6px; border: 1px solid var(--border-color); }
+    .input-group input, .input-group select, .input-group textarea { width: 100%; padding: 8px 10px; border-radius: 6px; border: 1px solid var(--border-color); font-family: inherit; }
 
-    /* Modal Framework */
     .modal-overlay {
       position: fixed;
       inset: 0;
@@ -294,9 +307,9 @@
     <div class="nav-left">
       <div class="app-brand">St. Giles Rota</div>
       <div class="nav-menu">
-        <a class="nav-item active" id="menu-rota">Rota</a>
-        <a class="nav-item" id="menu-leave">Book leave</a>
-        <a class="nav-item" id="menu-calendar">My calendar</a>
+        <a class="nav-item active" id="menu-rota" data-target="view-rota">Rota</a>
+        <a class="nav-item" id="menu-leave" data-target="view-leave">Book leave</a>
+        <a class="nav-item" id="menu-calendar" data-target="view-calendar">My calendar</a>
       </div>
     </div>
     <div class="nav-right">
@@ -306,7 +319,7 @@
   </header>
 
   <!-- TOOLBAR -->
-  <div class="toolbar">
+  <div class="toolbar" id="app-toolbar">
     <div class="toolbar-group">
       <button id="week-prev">◀</button>
       <span id="week-label" style="font-weight:700; font-size:0.85rem;"></span>
@@ -320,29 +333,72 @@
     </div>
   </div>
 
-  <!-- MAIN VIEW -->
+  <!-- MAIN VIEWS CONTAINER -->
   <main>
-    <div class="rota-container">
-      <div class="rota-header-row" id="rota-header">
-        <div class="rota-col-head title-cell">Primary location</div>
-      </div>
-
-      <div class="location-header"><span style="width:10px; height:10px; background:var(--brand-olive); display:inline-block; border-radius:50%;"></span> St Giles Animal Centre Operations</div>
-      <div id="rota-staff-rows"></div>
-
-      <div class="location-header" style="background:#fdf2f8; color:var(--brand-plum);"><span style="width:10px; height:10px; background:var(--brand-magenta); display:inline-block; border-radius:50%;"></span> Staff leave</div>
-      <div class="rota-row" id="leave-summary-row">
-        <div class="rota-cell staff-info">
-          <div class="staff-name" style="color:var(--brand-plum);">Approved Time Off</div>
-          <div class="staff-dept">Leave / Holidays</div>
+    <!-- ROTA VIEW -->
+    <div id="view-rota" class="view-section active">
+      <div class="rota-container">
+        <div class="rota-header-row" id="rota-header">
+          <div class="rota-col-head title-cell">Primary location</div>
         </div>
-        <div class="rota-cell"></div>
-        <div class="rota-cell"></div>
-        <div class="rota-cell"></div>
-        <div class="rota-cell"></div>
-        <div class="rota-cell"></div>
-        <div class="rota-cell"></div>
-        <div class="rota-cell"></div>
+
+        <div class="location-header"><span style="width:10px; height:10px; background:var(--brand-olive); display:inline-block; border-radius:50%;"></span> St Giles Animal Centre Operations</div>
+        <div id="rota-staff-rows"></div>
+
+        <div class="location-header" style="background:#fdf2f8; color:var(--brand-plum);"><span style="width:10px; height:10px; background:var(--brand-magenta); display:inline-block; border-radius:50%;"></span> Staff leave</div>
+        <div class="rota-row" id="leave-summary-row">
+          <div class="rota-cell staff-info">
+            <div class="staff-name" style="color:var(--brand-plum);">Approved Time Off</div>
+            <div class="staff-dept">Leave / Holidays</div>
+          </div>
+          <div class="rota-cell"></div>
+          <div class="rota-cell"></div>
+          <div class="rota-cell"></div>
+          <div class="rota-cell"></div>
+          <div class="rota-cell"></div>
+          <div class="rota-cell"></div>
+          <div class="rota-cell"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- BOOK LEAVE VIEW -->
+    <div id="view-leave" class="view-section">
+      <div class="card-panel">
+        <h3>Request Time Off / Leave</h3>
+        <p style="color:var(--text-muted); font-size:0.825rem; margin-bottom:20px;">Submit your holiday or leave dates for management approval.</p>
+        <div class="input-group">
+          <label>Start Date</label>
+          <input type="date" id="leave-start">
+        </div>
+        <div class="input-group">
+          <label>End Date</label>
+          <input type="date" id="leave-end">
+        </div>
+        <div class="input-group">
+          <label>Reason / Type</label>
+          <select id="leave-type">
+            <option value="Holiday / Leave">Annual Leave / Holiday</option>
+            <option value="Unpaid Leave">Unpaid Leave</option>
+            <option value="Sickness">Sickness</option>
+          </select>
+        </div>
+        <div class="input-group">
+          <label>Additional Notes</label>
+          <textarea id="leave-notes" rows="3" placeholder="Optional notes for managers..."></textarea>
+        </div>
+        <button class="btn-action" id="submit-leave-btn" style="width:100%; padding:10px; margin-top:10px;">Submit Leave Request</button>
+      </div>
+    </div>
+
+    <!-- MY CALENDAR VIEW -->
+    <div id="view-calendar" class="view-section">
+      <div class="card-panel" style="max-width: 800px;">
+        <h3>My Scheduled Shifts & Leave</h3>
+        <p style="color:var(--text-muted); font-size:0.825rem; margin-bottom:20px;">Your personal timeline of upcoming work schedules.</p>
+        <div id="personal-calendar-list" style="display:flex; flex-direction:column; gap:10px;">
+          <!-- Populated dynamically -->
+        </div>
       </div>
     </div>
   </main>
@@ -432,6 +488,28 @@
       return new Date(d.setDate(diff));
     }
 
+    // Navigation tab switching logic
+    document.querySelectorAll('.nav-menu .nav-item').forEach(item => {
+      item.onclick = (e) => {
+        e.preventDefault();
+        const targetView = item.getAttribute('data-target');
+        
+        // Block admin from leave booking view if desired, or let them switch seamlessly
+        document.querySelectorAll('.nav-menu .nav-item').forEach(nav => nav.classList.remove('active'));
+        item.classList.add('active');
+
+        document.querySelectorAll('.view-section').forEach(sec => sec.classList.remove('active'));
+        document.getElementById(targetView).classList.add('active');
+
+        // Hide toolbar date controls if not on the main Rota view
+        document.getElementById('app-toolbar').style.display = (targetView === 'view-rota') ? 'flex' : 'none';
+
+        if(targetView === 'view-calendar') {
+          renderPersonalCalendar();
+        }
+      };
+    });
+
     onAuthStateChanged(auth, async (user) => {
       if (user) {
         document.getElementById('auth-screen').style.display = 'none';
@@ -445,6 +523,11 @@
         const isAdmin = currentUser.role === 'admin';
         document.getElementById('admin-controls').style.display = isAdmin ? 'flex' : 'none';
         document.getElementById('user-badge').innerText = `${currentUser.displayName} (${currentUser.role})`;
+
+        // If admin, hide the "Book leave" navigation item completely
+        if(isAdmin) {
+          document.getElementById('menu-leave').style.display = 'none';
+        }
 
         loadDatabaseData();
       } else {
@@ -486,7 +569,6 @@
 
       document.getElementById('week-label').innerText = `${weekDays[0].dayNum} ${new Date(activeMonday).toLocaleDateString('en-GB', {month:'short'})} - ${weekDays[6].dayNum} ${new Date(iterator-1).toLocaleDateString('en-GB', {month:'short'})}`;
 
-      // Staff Rows
       const rowsContainer = document.getElementById('rota-staff-rows');
       rowsContainer.innerHTML = '';
 
@@ -509,7 +591,7 @@
             dayCell.innerHTML = `
               <div class="shift-pill ${isLeave ? 'leave' : ''}">
                 <span>${matched.shift}</span>
-                ${currentUser.role === 'admin' ? `<span onclick="window.removeShift('${matched.id}')" style="cursor:pointer; font-weight:bold; margin-left:4px;">×</span>` : ''}
+                ${currentUser.role === 'admin' ? `<span onclick="window.removeShift('${matched.id}')" style="cursor:pointer; font-weight:bold; margin-left:4px;" title="Delete shift">×</span>` : ''}
               </div>`;
           }
 
@@ -532,7 +614,6 @@
         rowsContainer.appendChild(tr);
       });
 
-      // Leave Summary Row
       const leaveSlots = document.querySelectorAll('#leave-summary-row .rota-cell:not(.staff-info)');
       leaveSlots.forEach((slot, idx) => {
         let wd = weekDays[idx];
@@ -578,6 +659,68 @@
         alert('Error: ' + e.message);
       }
     };
+
+    // Leave booking button submission handler
+    document.getElementById('submit-leave-btn').onclick = async () => {
+      const start = document.getElementById('leave-start').value;
+      const end = document.getElementById('leave-end').value;
+      const type = document.getElementById('leave-type').value;
+
+      if(!start || !end) return alert('Please choose both start and end dates.');
+      if(start > end) return alert('Start date cannot be after end date.');
+
+      try {
+        let curr = new Date(start);
+        let endDateObj = new Date(end);
+
+        while(curr <= endDateObj) {
+          let dateStr = curr.toISOString().split('T')[0];
+          let shiftId = `${dateStr}_${currentUser.displayName.replace(/\s+/g,'')}`;
+          await setDoc(doc(db, "shifts", shiftId), { 
+            staffName: currentUser.displayName, 
+            date: dateStr, 
+            shift: type 
+          });
+          curr.setDate(curr.getDate() + 1);
+        }
+
+        alert('Leave request submitted successfully!');
+        document.getElementById('leave-start').value = '';
+        document.getElementById('leave-end').value = '';
+        document.getElementById('leave-notes').value = '';
+        loadDatabaseData();
+        // Switch back to rota view automatically
+        document.getElementById('menu-rota').click();
+      } catch(e) {
+        alert('Error submitting leave: ' + e.message);
+      }
+    };
+
+    function renderPersonalCalendar() {
+      const container = document.getElementById('personal-calendar-list');
+      if(!currentUser) return;
+      
+      let userShifts = shiftList
+        .filter(s => s.staffName === currentUser.displayName)
+        .sort((a,b) => new Date(a.date) - new Date(b.date));
+
+      if(userShifts.length === 0) {
+        container.innerHTML = '<p style="color:var(--text-muted); font-size:0.85rem;">No shifts or leave entries found for your profile.</p>';
+        return;
+      }
+
+      container.innerHTML = userShifts.map(s => `
+        <div style="display:flex; justify-content:space-between; align-items:center; padding:12px; background:#f9fafb; border:1px solid var(--border-color); border-radius:6px;">
+          <div>
+            <div style="font-weight:600; font-size:0.85rem;">${new Date(s.date).toLocaleDateString('en-GB', {weekday: 'long', day: 'numeric', month: 'long', year: 'numeric'})}</div>
+            <div style="font-size:0.75rem; color:var(--text-muted); margin-top:2px;">Scheduled Entry</div>
+          </div>
+          <div style="background:#e0f2fe; color:#0369a1; padding:4px 10px; border-radius:4px; font-weight:600; font-size:0.8rem;">
+            ${s.shift}
+          </div>
+        </div>
+      `).join('');
+    }
 
     document.getElementById('week-prev').onclick = () => { activeMonday.setDate(activeMonday.getDate() - 7); renderDashboardGrid(); };
     document.getElementById('week-next').onclick = () => { activeMonday.setDate(activeMonday.getDate() + 7); renderDashboardGrid(); };

@@ -41,12 +41,13 @@
       height: 52px;
       padding: 0 16px;
       border-bottom: 1px solid #2d3748;
+      flex-wrap: wrap;
     }
 
     .nav-left, .nav-right {
       display: flex;
       align-items: center;
-      gap: 16px;
+      gap: 12px;
     }
 
     .app-brand {
@@ -61,15 +62,15 @@
 
     .nav-menu {
       display: flex;
-      gap: 8px;
+      gap: 4px;
     }
 
     .nav-item {
       color: #9ca3af;
       text-decoration: none;
-      font-size: 0.825rem;
+      font-size: 0.8rem;
       font-weight: 600;
-      padding: 6px 10px;
+      padding: 6px 8px;
       border-radius: 4px;
       cursor: pointer;
     }
@@ -81,25 +82,28 @@
 
     .toolbar {
       background: #ffffff;
-      padding: 10px 20px;
+      padding: 10px 16px;
       display: flex;
       justify-content: space-between;
       align-items: center;
       border-bottom: 1px solid var(--border-color);
+      flex-wrap: wrap;
+      gap: 10px;
     }
 
     .toolbar-group {
       display: flex;
       align-items: center;
-      gap: 10px;
+      gap: 8px;
+      flex-wrap: wrap;
     }
 
     button, select {
       font-family: inherit;
-      font-size: 0.825rem;
+      font-size: 0.8rem;
       border-radius: 6px;
       border: 1px solid var(--border-color);
-      padding: 6px 12px;
+      padding: 6px 10px;
       background: #fff;
       cursor: pointer;
       font-weight: 500;
@@ -116,9 +120,11 @@
     .btn-action:hover { background: #0284c7; }
 
     main {
-      padding: 20px;
+      padding: 16px;
       flex-grow: 1;
+      width: 100%;
       overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
     }
 
     .view-section {
@@ -128,44 +134,49 @@
       display: block;
     }
 
+    .rota-wrapper {
+      width: 100%;
+      overflow-x: auto;
+    }
+
     .rota-container {
       background: #fff;
       border: 1px solid var(--border-color);
       border-radius: 8px;
       overflow: hidden;
-      min-width: 1050px;
+      min-width: 900px;
       box-shadow: 0 1px 3px rgba(0,0,0,0.05);
     }
 
     .rota-header-row {
       display: grid;
-      grid-template-columns: 240px repeat(7, 1fr);
+      grid-template-columns: 220px repeat(7, 1fr);
       background: #f8fafc;
       border-bottom: 1px solid var(--border-color);
       text-align: center;
     }
 
     .rota-col-head {
-      padding: 10px 6px;
+      padding: 10px 4px;
       border-right: 1px solid var(--border-color);
       font-size: 0.75rem;
     }
 
     .rota-col-head.title-cell {
       text-align: left;
-      padding-left: 16px;
+      padding-left: 12px;
       font-weight: 700;
       color: #374151;
     }
 
     .day-name { font-weight: 700; color: #1f2937; }
-    .day-date { color: var(--text-muted); font-size: 0.7rem; }
+    .day-date { color: var(--text-muted); font-size: 0.68rem; }
 
     .location-header {
       background: #f1f5f9;
-      padding: 8px 16px;
+      padding: 8px 12px;
       font-weight: 700;
-      font-size: 0.8rem;
+      font-size: 0.775rem;
       color: #334155;
       border-bottom: 1px solid var(--border-color);
       border-top: 1px solid var(--border-color);
@@ -176,40 +187,41 @@
 
     .rota-row {
       display: grid;
-      grid-template-columns: 240px repeat(7, 1fr);
+      grid-template-columns: 220px repeat(7, 1fr);
       border-bottom: 1px solid var(--border-color);
-      min-height: 80px;
+      min-height: 76px;
     }
 
     .rota-cell {
       border-right: 1px solid var(--border-color);
-      padding: 6px;
+      padding: 4px;
       display: flex;
       flex-direction: column;
-      gap: 4px;
+      gap: 3px;
       position: relative;
     }
 
     .rota-cell.staff-info {
       background: #fafafa;
-      padding-left: 16px;
+      padding-left: 12px;
       justify-content: center;
     }
 
-    .staff-name { font-weight: 600; font-size: 0.825rem; color: #111827; }
-    .staff-dept { font-size: 0.7rem; color: var(--text-muted); }
+    .staff-name { font-weight: 600; font-size: 0.8rem; color: #111827; }
+    .staff-dept { font-size: 0.68rem; color: var(--text-muted); }
 
     .shift-pill {
       background: #e0f2fe;
       border-left: 3px solid var(--brand-blue);
       color: #0369a1;
-      padding: 4px 6px;
+      padding: 3px 5px;
       border-radius: 4px;
-      font-size: 0.725rem;
+      font-size: 0.7rem;
       font-weight: 600;
       display: flex;
       justify-content: space-between;
       align-items: center;
+      word-break: break-all;
     }
 
     .shift-pill.leave {
@@ -229,8 +241,8 @@
       background: none;
       border: 1px dashed #d1d5db;
       color: var(--text-muted);
-      font-size: 0.7rem;
-      padding: 4px;
+      font-size: 0.68rem;
+      padding: 3px;
       border-radius: 4px;
       cursor: pointer;
       width: 100%;
@@ -243,7 +255,7 @@
       background: #fff;
       border: 1px solid var(--border-color);
       border-radius: 8px;
-      padding: 24px;
+      padding: 20px;
       max-width: 600px;
       margin: 0 auto;
     }
@@ -257,17 +269,18 @@
       justify-content: center;
       align-items: center;
       z-index: 1000;
+      padding: 16px;
     }
     .auth-box {
       background: #fff;
-      padding: 32px;
+      padding: 28px;
       border-radius: 10px;
       width: 100%;
       max-width: 380px;
     }
-    .input-group { margin-bottom: 14px; }
-    .input-group label { display: block; font-size: 0.75rem; font-weight: 700; margin-bottom: 5px; color: var(--text-muted); }
-    .input-group input, .input-group select, .input-group textarea { width: 100%; padding: 8px 10px; border-radius: 6px; border: 1px solid var(--border-color); font-family: inherit; }
+    .input-group { margin-bottom: 12px; }
+    .input-group label { display: block; font-size: 0.75rem; font-weight: 700; margin-bottom: 4px; color: var(--text-muted); }
+    .input-group input, .input-group select, .input-group textarea { width: 100%; padding: 8px 10px; border-radius: 6px; border: 1px solid var(--border-color); font-family: inherit; font-size: 0.825rem; }
 
     .modal-overlay {
       position: fixed;
@@ -277,13 +290,41 @@
       justify-content: center;
       align-items: center;
       z-index: 500;
+      padding: 16px;
     }
     .modal-content {
       background: #fff;
-      padding: 24px;
+      padding: 20px;
       border-radius: 8px;
       width: 100%;
-      max-width: 380px;
+      max-width: 360px;
+    }
+
+    @media (max-width: 640px) {
+      header {
+        height: auto;
+        padding: 8px 12px;
+        gap: 8px;
+      }
+      .nav-left {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 6px;
+        width: 100%;
+      }
+      .nav-right {
+        width: 100%;
+        justify-content: space-between;
+        border-top: 1px solid rgba(255,255,255,0.1);
+        padding-top: 6px;
+      }
+      .toolbar {
+        flex-direction: column;
+        align-items: stretch;
+      }
+      .toolbar-group {
+        justify-content: space-between;
+      }
     }
   </style>
 </head>
@@ -325,7 +366,7 @@
   <div class="toolbar" id="app-toolbar">
     <div class="toolbar-group">
       <button id="week-prev">◀</button>
-      <span id="week-label" style="font-weight:700; font-size:0.85rem;"></span>
+      <span id="week-label" style="font-weight:700; font-size:0.825rem;"></span>
       <button id="week-next">▶</button>
       <button id="week-today">Current week</button>
     </div>
@@ -338,27 +379,29 @@
 
   <main>
     <div id="view-rota" class="view-section active">
-      <div class="rota-container">
-        <div class="rota-header-row" id="rota-header">
-          <div class="rota-col-head title-cell">Primary location</div>
-        </div>
-
-        <div class="location-header"><span style="width:10px; height:10px; background:var(--brand-olive); display:inline-block; border-radius:50%;"></span> St Giles Animal Centre Operations</div>
-        <div id="rota-staff-rows"></div>
-
-        <div class="location-header" style="background:#fdf2f8; color:var(--brand-plum);"><span style="width:10px; height:10px; background:var(--brand-magenta); display:inline-block; border-radius:50%;"></span> Staff leave</div>
-        <div class="rota-row" id="leave-summary-row">
-          <div class="rota-cell staff-info">
-            <div class="staff-name" style="color:var(--brand-plum);">Approved Time Off</div>
-            <div class="staff-dept">Leave / Holidays</div>
+      <div class="rota-wrapper">
+        <div class="rota-container">
+          <div class="rota-header-row" id="rota-header">
+            <div class="rota-col-head title-cell">Primary location</div>
           </div>
-          <div class="rota-cell"></div>
-          <div class="rota-cell"></div>
-          <div class="rota-cell"></div>
-          <div class="rota-cell"></div>
-          <div class="rota-cell"></div>
-          <div class="rota-cell"></div>
-          <div class="rota-cell"></div>
+
+          <div class="location-header"><span style="width:8px; height:8px; background:var(--brand-olive); display:inline-block; border-radius:50%;"></span> St Giles Animal Centre Operations</div>
+          <div id="rota-staff-rows"></div>
+
+          <div class="location-header" style="background:#fdf2f8; color:var(--brand-plum);"><span style="width:8px; height:8px; background:var(--brand-magenta); display:inline-block; border-radius:50%;"></span> Staff leave</div>
+          <div class="rota-row" id="leave-summary-row">
+            <div class="rota-cell staff-info">
+              <div class="staff-name" style="color:var(--brand-plum);">Approved Time Off</div>
+              <div class="staff-dept">Leave / Holidays</div>
+            </div>
+            <div class="rota-cell"></div>
+            <div class="rota-cell"></div>
+            <div class="rota-cell"></div>
+            <div class="rota-cell"></div>
+            <div class="rota-cell"></div>
+            <div class="rota-cell"></div>
+            <div class="rota-cell"></div>
+          </div>
         </div>
       </div>
     </div>

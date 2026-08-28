@@ -355,6 +355,7 @@
     }
 
     .btn-primary:hover { background: var(--primary-hover); }
+    .btn-primary:disabled { opacity: 0.7; cursor: not-allowed; }
 
     .modal-overlay {
       position: fixed;
@@ -672,7 +673,7 @@
 
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-    import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, updatePassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+    import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, updatePassword, onAuthStateChanged, signOut, setPersistence, inMemoryPersistence } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
     import { getFirestore, doc, getDoc, setDoc, deleteDoc, collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
     const firebaseConfig = {
@@ -689,9 +690,10 @@
     const auth = getAuth(app);
     const db = getFirestore(app);
 
-    // Secondary Firebase app instance to provision users in background without logging out the admin
-    const secondaryApp = initializeApp(firebaseConfig, "SecondaryApp");
+    // Bulletproof secondary app initialization isolated strictly to in-memory persistence
+    const secondaryApp = initializeApp(firebaseConfig, "SecondaryProvisioningApp");
     const secondaryAuth = getAuth(secondaryApp);
+    setPersistence(secondaryAuth, inMemoryPersistence).catch((err) => console.error(err));
 
     let currentDate = new Date();
     let currentShifts = [];
@@ -854,19 +856,29 @@
       if (!staffName) return alert('Please select a team member.');
       if (selectedBatchDays.length === 0) return alert('Please select at least one day on the calendar grid.');
 
-      for (const dateStr of selectedBatchDays) {
-        const shiftId = `${dateStr}_${staffName.replace(/\s+/g, '')}`;
-        await setDoc(doc(db, "shifts", shiftId), {
-          staffName: staffName,
-          date: dateStr,
-          department: dept,
-          shift: shiftVal
-        });
-      }
+      const btn = document.getElementById('batch-save-btn');
+      btn.disabled = true;
+      btn.innerText = 'Saving Shifts...';
 
-      alert(`Successfully saved ${selectedBatchDays.length} shift(s) for ${staffName}!`);
-      document.getElementById('batch-drawer').classList.remove('open');
-      loadAndRenderCalendar();
+      try {
+        for (const dateStr of selectedBatchDays) {
+          const shiftId = `${dateStr}_${staffName.replace(/\s+/g, '')}`;
+          await setDoc(doc(db, "shifts", shiftId), {
+            staffName: staffName,
+            date: dateStr,
+            department: dept,
+            shift: shiftVal
+          });
+        }
+        alert(`Successfully saved ${selectedBatchDays.length} shift(s) for ${staffName}!`);
+        document.getElementById('batch-drawer').classList.remove('open');
+        loadAndRenderCalendar();
+      } catch (err) {
+        alert('Error saving batch shifts: ' + err.message);
+      } finally {
+        btn.disabled = false;
+        btn.innerText = 'Apply Batch Shifts';
+      }
     });
 
     function openShiftModal(dateStr) {
@@ -907,34 +919,52 @@
 
       if (selectedStaff.length === 0) return alert('Please select at least one staff member.');
 
-      for (const name of selectedStaff) {
-        const shiftId = `${selectedDate}_${name.replace(/\s+/g, '')}`;
-        await setDoc(doc(db, "shifts", shiftId), {
-          staffName: name,
-          date: selectedDate,
-          department: dept,
-          shift: shiftValue
-        });
-      }
+      const btn = document.getElementById('modal-save-btn');
+      btn.disabled = true;
+      btn.innerText = 'Saving...';
 
-      document.getElementById('shift-modal').style.display = 'none';
-      loadAndRenderCalendar();
+      try {
+        for (const name of selectedStaff) {
+          const shiftId = `${selectedDate}_${name.replace(/\s+/g, '')}`;
+          await setDoc(doc(db, "shifts", shiftId), {
+            staffName: name,
+            date: selectedDate,
+            department: dept,
+            shift: shiftValue
+          });
+        }
+        document.getElementById('shift-modal').style.display = 'none';
+        loadAndRenderCalendar();
+      } catch (err) {
+        alert('Failed to save shift: ' + err.message);
+      } finally {
+        btn.disabled = false;
+        btn.innerText = 'Save Rota Shift';
+      }
     });
 
     window.deleteShift = async function(shiftId) {
       if (confirm('Are you sure you want to remove this shift?')) {
-        await deleteDoc(doc(db, "shifts", shiftId));
-        loadAndRenderCalendar();
+        try {
+          await deleteDoc(doc(db, "shifts", shiftId));
+          loadAndRenderCalendar();
+        } catch (err) {
+          alert('Failed to delete shift: ' + err.message);
+        }
       }
     }
 
-    // PROVISION STAFF ACCOUNT (Uses secondaryAuth so Admin stays logged in)
+    // BULLETPROOF ACCOUNT PROVISIONING (Secondary App with isolated memory state)
     document.getElementById('send-invite-btn').addEventListener('click', async () => {
       const email = document.getElementById('invite-email').value.trim().toLowerCase();
       const name = document.getElementById('invite-name').value.trim();
       const dept = document.getElementById('invite-dept').value;
 
       if (!email || !name) return alert('Please enter both email and full name.');
+
+      const btn = document.getElementById('send-invite-btn');
+      btn.disabled = true;
+      btn.innerText = 'Creating Credentials...';
 
       try {
         const tempPassword = "StGiles2026!";
@@ -959,14 +989,16 @@
           <p style="font-size:0.75rem; color:#475569; margin-top:8px;">Staff can log in and update their password immediately via 'My Account'.</p>
         `;
         
-        // Refresh calendar staff list
         loadAndRenderCalendar();
       } catch (err) {
         if (err.code === 'auth/email-already-in-use') {
           alert('An account with this email address already exists.');
         } else {
-          alert(err.message);
+          alert('Provisioning error: ' + err.message);
         }
+      } finally {
+        btn.disabled = false;
+        btn.innerText = 'Create Secure Credentials';
       }
     });
 

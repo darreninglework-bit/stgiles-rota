@@ -348,7 +348,6 @@
 </head>
 <body>
 
-  <!-- AUTH / SIGN IN -->
   <div id="auth-box">
     <h2 style="margin-top:0;">St Giles Rota</h2>
     <p style="color:var(--text-muted); font-size:0.9rem; margin-bottom:20px;">Sign in to access your roster</p>
@@ -364,7 +363,6 @@
     <p id="error-msg" style="color: #ef4444; font-size:0.85rem; margin-top:10px;"></p>
   </div>
 
-  <!-- MAIN APP WRAPPER -->
   <div id="dashboard" style="display: none; width:100%;">
     
     <aside class="sidebar">
@@ -428,7 +426,6 @@
       </div>
     </main>
 
-    <!-- MY ACCOUNT DRAWER -->
     <div id="account-drawer" class="drawer">
       <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:24px;">
         <h3 style="margin:0;">My Account</h3>
@@ -452,7 +449,6 @@
       </div>
     </div>
 
-    <!-- BATCH SHIFT BUILDER DRAWER -->
     <div id="batch-drawer" class="drawer">
       <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:24px;">
         <h3 style="margin:0;">⚡ Monthly Batch Builder</h3>
@@ -488,7 +484,6 @@
       <button id="batch-save-btn" class="btn-primary" style="margin-top: 20px;">Save All Shifts for Selected Days</button>
     </div>
 
-    <!-- ADD STAFF DRAWER -->
     <div id="staff-drawer" class="drawer">
       <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:24px;">
         <h3 style="margin:0;">Add New Staff Member</h3>
@@ -523,7 +518,6 @@
       </div>
     </div>
 
-    <!-- SINGLE SHIFT MODAL -->
     <div id="shift-modal" class="modal-overlay">
       <div class="modal-card">
         <h3 style="margin-top:0;">Assign Shift (<span id="modal-date-label"></span>)</h3>
@@ -554,7 +548,7 @@
 
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-    import { getAuth, signInWithEmailAndPassword, sendPasswordResetEmail, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+    import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, sendPasswordResetEmail, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
     import { getFirestore, doc, getDoc, setDoc, deleteDoc, collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
     const firebaseConfig = {
@@ -816,6 +810,7 @@
       }
     }
 
+    // CREATE USER & GENERATE RESET LINK ON SCREEN (BYPASSES EMAIL BLOCK)
     document.getElementById('send-invite-btn').addEventListener('click', async () => {
       const email = document.getElementById('invite-email').value.trim().toLowerCase();
       const name = document.getElementById('invite-name').value.trim();
@@ -824,15 +819,42 @@
       if (!email || !name) return alert('Enter email and name.');
 
       try {
-        await setDoc(doc(db, "invites", email), { displayName: name, department: dept, createdAt: new Date().toISOString() });
-        await sendPasswordResetEmail(auth, email);
+        const tempPassword = Math.random().toString(36).slice(-8) + 'A1!';
+        const userCredential = await createUserWithEmailAndPassword(auth, email, tempPassword);
+        const newUser = userCredential.user;
+
+        await setDoc(doc(db, "users", newUser.uid), {
+          displayName: name,
+          department: dept,
+          role: "staff"
+        });
+
+        const apiKey = "AIzaSyCpKVdl5bsAL9wOEES7vr6-B-8kAEv_fLA";
+        const response = await fetch(`https://identitytoolkit.googleapis.com/v1/accounts:sendOobCode?key=${apiKey}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ requestType: "PASSWORD_RESET", email: email })
+        });
+        const data = await response.json();
+        
+        const resetLink = `https://stgiles-rota.firebaseapp.com/__/auth/action?mode=resetPassword&oobCode=${data.oobCode}&apiKey=${apiKey}`;
+
+        document.getElementById('invite-email').value = '';
+        document.getElementById('invite-name').value = '';
 
         document.getElementById('link-result-box').style.display = 'block';
         document.getElementById('link-result-box').innerHTML = `
-          <span style="font-size:0.8rem; font-weight:700; color:#1e40af; display:block; margin-bottom:6px;">✅ Invite Sent Successfully!</span>
-          <p style="font-size:0.8rem; color:#1e3a8a; margin:0;">A real password setup email has been dispatched to <strong>${email}</strong> via Firebase.</p>
+          <span style="font-size:0.8rem; font-weight:700; color:#1e40af; display:block; margin-bottom:6px;">✅ Staff Account Created Successfully!</span>
+          <p style="font-size:0.8rem; color:#1e3a8a; margin-bottom: 8px;">Copy this secure setup link and send it directly to <strong>${name}</strong>:</p>
+          <input type="text" value="${resetLink}" readonly style="font-size: 0.75rem; background: #fff; padding: 6px; width:100%;" onclick="this.select();">
         `;
-      } catch (err) { alert(err.message); }
+      } catch (err) {
+        if (err.code === 'auth/email-already-in-use') {
+          alert('An account with this email already exists in Firebase Auth.');
+        } else {
+          alert(err.message);
+        }
+      }
     });
 
     document.getElementById('btn-open-batch').addEventListener('click', () => {

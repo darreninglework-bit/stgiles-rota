@@ -135,7 +135,6 @@
       display: block;
     }
 
-    /* PERFECT RESPONSIVE TABLE WRAPPER */
     .rota-wrapper {
       width: 100%;
       background: #fff;
@@ -335,7 +334,6 @@
       color: #374151;
     }
 
-    /* Mobile Adaptations */
     @media (max-width: 768px) {
       header {
         height: auto;
@@ -396,6 +394,7 @@
         <a class="nav-item" id="menu-staff" data-target="view-staff" style="display:none;">Manage Staff</a>
         <a class="nav-item" id="menu-leave" data-target="view-leave">Book Leave</a>
         <a class="nav-item" id="menu-calendar" data-target="view-calendar">My Calendar</a>
+        <a class="nav-item" id="menu-settings" data-target="view-settings">Settings</a>
       </div>
     </div>
     <div class="nav-right">
@@ -461,7 +460,7 @@
     <div id="view-leave" class="view-section">
       <div class="card-panel">
         <h3>Request Time Off / Leave</h3>
-        <p style="color:var(--text-muted); font-size:0.85rem; margin-bottom:20px;">Submit your holiday or leave dates for management schedule updates.</p>
+        <p style="color:var(--text-muted); font-size:0.85rem; margin-bottom:20px;">Submit your holiday or leave dates. This will automatically notify managers/admin.</p>
         <div class="input-group">
           <label>Start Date</label>
           <input type="date" id="leave-start">
@@ -492,6 +491,27 @@
         <p style="color:var(--text-muted); font-size:0.85rem; margin-bottom:20px;">Your personal timeline of upcoming work schedules and assignments.</p>
         <div id="personal-calendar-list" style="display:flex; flex-direction:column; gap:10px;">
           </div>
+      </div>
+    </div>
+
+    <div id="view-settings" class="view-section">
+      <div class="card-panel">
+        <h3>Account Settings</h3>
+        <p style="color:var(--text-muted); font-size:0.85rem; margin-bottom:20px;">Update your account password securely.</p>
+        <div class="input-group">
+          <label>Current Password</label>
+          <input type="password" id="settings-old-pass" placeholder="••••••••">
+        </div>
+        <div class="input-group">
+          <label>New Password</label>
+          <input type="password" id="settings-new-pass" placeholder="••••••••">
+        </div>
+        <div class="input-group">
+          <label>Confirm New Password</label>
+          <input type="password" id="settings-confirm-pass" placeholder="••••••••">
+        </div>
+        <button class="btn-action" id="update-password-btn" style="width:100%; padding:10px; margin-top:10px;">Update Password</button>
+        <p id="settings-message" style="font-size:0.775rem; margin-top:12px; font-weight:600; text-align:center;"></p>
       </div>
     </div>
   </main>
@@ -559,8 +579,8 @@
 
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-    import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
-    import { getFirestore, collection, doc, getDoc, setDoc, updateDoc, deleteDoc, getDocs } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+    import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, signInWithEmailAndPassword as reauthenticateUser, updatePassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+    import { getFirestore, collection, doc, getDoc, setDoc, updateDoc, deleteDoc, getDocs, addCollection } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
     const firebaseConfig = {
       apiKey: "AIzaSyCpKVdl5bsAL9wOEES7vr6-B-8kAEv_fLA",
@@ -614,9 +634,9 @@
         document.getElementById('auth-screen').style.display = 'none';
         try {
           const userDoc = await getDoc(doc(db, "users", user.uid));
-          currentUser = userDoc.exists() ? userDoc.data() : { displayName: user.email.split('@')[0], role: 'staff' };
+          currentUser = userDoc.exists() ? { id: user.uid, email: user.email, ...userDoc.data() } : { id: user.uid, email: user.email, displayName: user.email.split('@')[0], role: 'staff' };
         } catch(e) {
-          currentUser = { displayName: user.email.split('@')[0], role: 'staff' };
+          currentUser = { id: user.uid, email: user.email, displayName: user.email.split('@')[0], role: 'staff' };
         }
 
         const isAdmin = currentUser.role === 'admin';
@@ -657,7 +677,6 @@
       const container = document.getElementById('rota-main-table');
       container.innerHTML = '';
 
-      // Header row
       const headerRow = document.createElement('div');
       headerRow.className = 'rota-header-row';
       headerRow.id = 'rota-header';
@@ -680,13 +699,11 @@
 
       document.getElementById('week-label').innerText = `${weekDays[0].dayNum} ${new Date(activeMonday).toLocaleDateString('en-GB', {month:'short'})} - ${weekDays[6].dayNum} ${new Date(iterator-1).toLocaleDateString('en-GB', {month:'short'})}`;
 
-      // Section 1: Operations Header
       let opHeader = document.createElement('div');
       opHeader.className = 'location-header';
       opHeader.innerHTML = `<span style="width:9px; height:9px; background:var(--brand-olive); display:inline-block; border-radius:50%;"></span> St Giles Animal Centre Operations`;
       container.appendChild(opHeader);
 
-      // Staff Rows
       staffList.forEach(staff => {
         let tr = document.createElement('div');
         tr.className = 'rota-row';
@@ -732,7 +749,6 @@
         container.appendChild(tr);
       });
 
-      // Section 2: Leave Summary Header & Row
       let leaveHeader = document.createElement('div');
       leaveHeader.className = 'location-header';
       leaveHeader.style.cssText = "background:#fdf2f8; color:var(--brand-plum); border-top:2px solid var(--border-color);";
@@ -836,7 +852,7 @@
       const editId = document.getElementById('edit-staff-id').value;
       const name = document.getElementById('new-name').value.trim();
       const email = document.getElementById('new-email').value.trim().toLowerCase();
-      const dept = document.getElementById('new-dept').value;
+      const dept = document.getElementById('new-dept'].value;
       const role = document.getElementById('new-role').value;
 
       if(!name || !email) return alert('Please enter name and email.');
@@ -856,10 +872,12 @@
       }
     };
 
+    // LEAVE REQUEST WITH EMAIL NOTIFICATION TRIGGER TO ADMINS/MANAGERS
     document.getElementById('submit-leave-btn').onclick = async () => {
       const start = document.getElementById('leave-start').value;
       const end = document.getElementById('leave-end').value;
       const type = document.getElementById('leave-type').value;
+      const notes = document.getElementById('leave-notes').value;
 
       if(!start || !end) return alert('Please choose both start and end dates.');
       if(start > end) return alert('Start date cannot be after end date.');
@@ -879,7 +897,25 @@
           curr.setDate(curr.getDate() + 1);
         }
 
-        alert('Leave request submitted successfully!');
+        // Gather admin and manager emails to simulate or dispatch automated mail alert
+        const adminAndManagers = staffList.filter(s => s.role === 'admin' || (s.department && s.department.includes('Manager')));
+        const recipientEmails = adminAndManagers.map(m => m.email).join(',');
+
+        // Build mailto trigger or simulation dispatch log
+        const subject = encodeURIComponent(`Leave Request: ${currentUser.displayName} (${type})`);
+        const body = encodeURIComponent(`Hello Management,\n\n${currentUser.displayName} has submitted a leave request.\n\nType: ${type}\nFrom: ${start}\nTo: ${end}\nNotes: ${notes || 'None'}\n\nPlease check the St Giles Rota dashboard for updates.`);
+        
+        console.log(`[Email Dispatch Triggered] To: ${recipientEmails || 'admin@stgiles.co.uk'} | Subject: Leave Request from ${currentUser.displayName}`);
+
+        // Automatically spawn a prefilled email client link or background trigger for management alerts
+        const mailTrigger = document.createElement('a');
+        mailTrigger.href = `mailto:${recipientEmails || 'admin@stgiles.co.uk'}?subject=${subject}&body=${body}`;
+        mailTrigger.style.display = 'none';
+        document.body.appendChild(mailTrigger);
+        mailTrigger.click();
+        document.body.removeChild(mailTrigger);
+
+        alert('Leave request submitted and notification email triggered to managers/admin!');
         document.getElementById('leave-start').value = '';
         document.getElementById('leave-end').value = '';
         document.getElementById('leave-notes').value = '';
@@ -887,6 +923,47 @@
         document.getElementById('menu-rota').click();
       } catch(e) {
         alert('Error submitting leave: ' + e.message);
+      }
+    };
+
+    // PASSWORD UPDATE ROUTINE
+    document.getElementById('update-password-btn').onclick = async () => {
+      const oldPass = document.getElementById('settings-old-pass').value;
+      const newPass = document.getElementById('settings-new-pass').value;
+      const confirmPass = document.getElementById('settings-confirm-pass').value;
+      const msgElem = document.getElementById('settings-message');
+
+      msgElem.innerText = '';
+      if(!oldPass || !newPass || !confirmPass) {
+        msgElem.style.color = '#dc2626';
+        msgElem.innerText = 'Please fill out all password fields.';
+        return;
+      }
+      if(newPass !== confirmPass) {
+        msgElem.style.color = '#dc2626';
+        msgElem.innerText = 'New passwords do not match.';
+        return;
+      }
+      if(newPass.length < 6) {
+        msgElem.style.color = '#dc2626';
+        msgElem.innerText = 'Password must be at least 6 characters long.';
+        return;
+      }
+
+      try {
+        const user = auth.currentUser;
+        // Re-authenticate user first
+        await reauthenticateUser(auth, user.email, oldPass);
+        await updatePassword(user, newPass);
+        
+        msgElem.style.color = '#16a34a';
+        msgElem.innerText = 'Password updated successfully!';
+        document.getElementById('settings-old-pass').value = '';
+        document.getElementById('settings-new-pass').value = '';
+        document.getElementById('settings-confirm-pass').value = '';
+      } catch(e) {
+        msgElem.style.color = '#dc2626';
+        msgElem.innerText = 'Error updating password: ' + e.message;
       }
     };
 

@@ -403,7 +403,6 @@
       border-color: var(--accent);
     }
 
-    /* Legal / Compliance Footer Note */
     .legal-footer {
       font-size: 0.75rem;
       color: var(--text-muted);
@@ -690,6 +689,10 @@
     const auth = getAuth(app);
     const db = getFirestore(app);
 
+    // Secondary Firebase app instance to provision users in background without logging out the admin
+    const secondaryApp = initializeApp(firebaseConfig, "SecondaryApp");
+    const secondaryAuth = getAuth(secondaryApp);
+
     let currentDate = new Date();
     let currentShifts = [];
     let deptStaff = [];
@@ -925,7 +928,7 @@
       }
     }
 
-    // PROVISION STAFF ACCOUNT
+    // PROVISION STAFF ACCOUNT (Uses secondaryAuth so Admin stays logged in)
     document.getElementById('send-invite-btn').addEventListener('click', async () => {
       const email = document.getElementById('invite-email').value.trim().toLowerCase();
       const name = document.getElementById('invite-name').value.trim();
@@ -935,7 +938,7 @@
 
       try {
         const tempPassword = "StGiles2026!";
-        const userCredential = await createUserWithEmailAndPassword(auth, email, tempPassword);
+        const userCredential = await createUserWithEmailAndPassword(secondaryAuth, email, tempPassword);
         const newUser = userCredential.user;
 
         await setDoc(doc(db, "users", newUser.uid), {
@@ -955,6 +958,9 @@
           <p style="font-size:0.825rem; margin:4px 0;"><strong>Temp Password:</strong> ${tempPassword}</p>
           <p style="font-size:0.75rem; color:#475569; margin-top:8px;">Staff can log in and update their password immediately via 'My Account'.</p>
         `;
+        
+        // Refresh calendar staff list
+        loadAndRenderCalendar();
       } catch (err) {
         if (err.code === 'auth/email-already-in-use') {
           alert('An account with this email address already exists.');

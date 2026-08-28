@@ -450,6 +450,16 @@
         <label>Account Role</label>
         <input type="text" id="acc-role" readonly>
       </div>
+
+      <hr style="border:0; border-top:1px solid var(--border-color); margin: 24px 0;">
+
+      <h4 style="margin:0 0 12px 0; font-size:0.95rem;">Change Password</h4>
+      <div class="input-group">
+        <label>New Password</label>
+        <input type="password" id="new-password" placeholder="At least 6 characters">
+      </div>
+      <button id="update-pass-btn" class="btn-primary" style="background:#0f172a;">Update Password</button>
+      <p id="pass-msg" style="font-size:0.8rem; margin-top:8px;"></p>
     </div>
 
     <!-- BATCH SHIFT BUILDER DRAWER -->
@@ -554,7 +564,7 @@
 
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-    import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+    import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, updatePassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
     import { getFirestore, doc, getDoc, setDoc, deleteDoc, collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
     const firebaseConfig = {
@@ -585,16 +595,6 @@
         document.getElementById('dashboard').style.display = 'flex';
 
         try {
-          const inviteDoc = await getDoc(doc(db, "invites", user.email.toLowerCase()));
-          if (inviteDoc.exists()) {
-            const inv = inviteDoc.data();
-            await setDoc(doc(db, "users", user.uid), {
-              displayName: inv.displayName,
-              department: inv.department,
-              role: "staff"
-            }, { merge: true });
-          }
-
           const userDoc = await getDoc(doc(db, "users", user.uid));
           if (userDoc.exists()) {
             currentUserData = userDoc.data();
@@ -816,7 +816,7 @@
       }
     }
 
-    // CREATE USER WITH TEMPORARY PASSWORD (BYPASSES EMAIL BLOCK)
+    // CREATE STAFF ACCOUNT
     document.getElementById('send-invite-btn').addEventListener('click', async () => {
       const email = document.getElementById('invite-email').value.trim().toLowerCase();
       const name = document.getElementById('invite-name').value.trim();
@@ -844,13 +844,42 @@
           <p style="font-size:0.8rem; color:#1e3a8a; margin-bottom: 6px;">Give these login details to <strong>${name}</strong>:</p>
           <p style="font-size:0.85rem; margin:4px 0;"><strong>Email:</strong> ${email}</p>
           <p style="font-size:0.85rem; margin:4px 0;"><strong>Temp Password:</strong> ${tempPassword}</p>
-          <p style="font-size:0.75rem; color:#64748b; margin-top:8px;">They can sign in right away using these credentials.</p>
+          <p style="font-size:0.75rem; color:#64748b; margin-top:8px;">They can sign in and change their password anytime in 'My Account'.</p>
         `;
       } catch (err) {
         if (err.code === 'auth/email-already-in-use') {
           alert('An account with this email already exists in Firebase Auth.');
         } else {
           alert(err.message);
+        }
+      }
+    });
+
+    // UPDATE PASSWORD FROM MY ACCOUNT
+    document.getElementById('update-pass-btn').addEventListener('click', async () => {
+      const newPass = document.getElementById('new-password').value;
+      const msgEl = document.getElementById('pass-msg');
+
+      if (!newPass || newPass.length < 6) {
+        msgEl.style.color = '#ef4444';
+        msgEl.innerText = 'Password must be at least 6 characters.';
+        return;
+      }
+
+      const user = auth.currentUser;
+      if (!user) return;
+
+      try {
+        await updatePassword(user, newPass);
+        msgEl.style.color = '#16a34a';
+        msgEl.innerText = '✅ Password successfully updated!';
+        document.getElementById('new-password').value = '';
+      } catch (err) {
+        msgEl.style.color = '#ef4444';
+        if (err.code === 'auth/requires-recent-login') {
+          msgEl.innerText = 'Please sign out and sign back in before changing password.';
+        } else {
+          msgEl.innerText = err.message;
         }
       }
     });

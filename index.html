@@ -368,6 +368,7 @@
 </head>
 <body>
 
+  <!-- LOGIN SCREEN -->
   <div id="auth-screen">
     <div class="auth-box">
       <div style="background:var(--brand-blue); color:#fff; display:inline-block; padding:4px 8px; font-weight:800; border-radius:4px; font-size:0.75rem; margin-bottom:14px; text-transform:uppercase;">St Giles RotaPlanner</div>
@@ -386,6 +387,7 @@
     </div>
   </div>
 
+  <!-- TOP APP HEADER -->
   <header>
     <div class="nav-left">
       <div class="app-brand">St. Giles Rota</div>
@@ -403,6 +405,7 @@
     </div>
   </header>
 
+  <!-- TOOLBAR -->
   <div class="toolbar" id="app-toolbar">
     <div class="toolbar-group">
       <button id="week-prev">◀ Prev</button>
@@ -417,7 +420,9 @@
     </div>
   </div>
 
+  <!-- MAIN VIEWS CONTAINER -->
   <main>
+    <!-- ROTA VIEW -->
     <div id="view-rota" class="view-section active">
       <div class="rota-wrapper">
         <div class="rota-scroll-container">
@@ -430,6 +435,7 @@
       </div>
     </div>
 
+    <!-- MANAGE STAFF VIEW -->
     <div id="view-staff" class="view-section">
       <div class="card-panel">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; flex-wrap:wrap; gap:10px;">
@@ -451,12 +457,14 @@
               </tr>
             </thead>
             <tbody id="staff-directory-body">
-              </tbody>
+              <!-- Dynamically populated -->
+            </tbody>
           </table>
         </div>
       </div>
     </div>
 
+    <!-- BOOK LEAVE VIEW -->
     <div id="view-leave" class="view-section">
       <div class="card-panel">
         <h3>Request Time Off / Leave</h3>
@@ -485,15 +493,18 @@
       </div>
     </div>
 
+    <!-- MY CALENDAR VIEW -->
     <div id="view-calendar" class="view-section">
       <div class="card-panel">
         <h3>My Scheduled Shifts & Leave</h3>
         <p style="color:var(--text-muted); font-size:0.85rem; margin-bottom:20px;">Your personal timeline of upcoming work schedules and assignments.</p>
         <div id="personal-calendar-list" style="display:flex; flex-direction:column; gap:10px;">
-          </div>
+          <!-- Populated dynamically -->
+        </div>
       </div>
     </div>
 
+    <!-- SETTINGS / PASSWORD VIEW -->
     <div id="view-settings" class="view-section">
       <div class="card-panel">
         <h3>Account Settings</h3>
@@ -516,6 +527,7 @@
     </div>
   </main>
 
+  <!-- ADD SHIFT MODAL -->
   <div id="modal-shift" class="modal-overlay">
     <div class="modal-content">
       <h3 style="margin-top:0; font-size:1rem;">Assign Shift / Status</h3>
@@ -541,6 +553,7 @@
     </div>
   </div>
 
+  <!-- ADD / EDIT STAFF MODAL -->
   <div id="modal-staff" class="modal-overlay">
     <div class="modal-content">
       <h3 style="margin-top:0; font-size:1rem;" id="modal-staff-title">Add New Staff Member</h3>
@@ -580,7 +593,7 @@
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
     import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, signInWithEmailAndPassword as reauthenticateUser, updatePassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
-    import { getFirestore, collection, doc, getDoc, setDoc, updateDoc, deleteDoc, getDocs, addCollection } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+    import { getFirestore, collection, doc, getDoc, setDoc, updateDoc, deleteDoc, getDocs, writeBatch } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
     const firebaseConfig = {
       apiKey: "AIzaSyCpKVdl5bsAL9wOEES7vr6-B-8kAEv_fLA",
@@ -803,13 +816,30 @@
       document.getElementById('modal-staff').style.display = 'flex';
     };
 
+    // REMOVE STAFF AND ALL ASSOCIATED SHIFTS/HOLIDAY RECORDS FROM DATABASE
     window.removeStaff = async function(id, name) {
-      if(confirm(`Are you sure you want to delete staff account for ${name}?`)) {
+      if(confirm(`Are you sure you want to delete staff account for ${name}? This will also remove them from the database and clear all associated shifts and holiday calendar records.`)) {
         try {
-          await deleteDoc(doc(db, "users", id));
+          const batch = writeBatch(db);
+
+          // 1. Delete user record from 'users' collection
+          const userDocRef = doc(db, "users", id);
+          batch.delete(userDocRef);
+
+          // 2. Find and delete all shifts/leave entries matching this staff member's name
+          const staffShifts = shiftList.filter(s => s.staffName === name);
+          staffShifts.forEach(shift => {
+            const shiftDocRef = doc(db, "shifts", shift.id);
+            batch.delete(shiftDocRef);
+          });
+
+          // Commit batch execution
+          await batch.commit();
+
+          alert(`Staff member ${name} and their associated holiday/shift calendar entries have been successfully deleted.`);
           loadDatabaseData();
         } catch(e) {
-          alert('Error deleting staff: ' + e.message);
+          alert('Error removing staff and records: ' + e.message);
         }
       }
     };
@@ -852,7 +882,7 @@
       const editId = document.getElementById('edit-staff-id').value;
       const name = document.getElementById('new-name').value.trim();
       const email = document.getElementById('new-email').value.trim().toLowerCase();
-      const dept = document.getElementById('new-dept'].value;
+      const dept = document.getElementById('new-dept').value;
       const role = document.getElementById('new-role').value;
 
       if(!name || !email) return alert('Please enter name and email.');
@@ -897,17 +927,12 @@
           curr.setDate(curr.getDate() + 1);
         }
 
-        // Gather admin and manager emails to simulate or dispatch automated mail alert
         const adminAndManagers = staffList.filter(s => s.role === 'admin' || (s.department && s.department.includes('Manager')));
         const recipientEmails = adminAndManagers.map(m => m.email).join(',');
 
-        // Build mailto trigger or simulation dispatch log
         const subject = encodeURIComponent(`Leave Request: ${currentUser.displayName} (${type})`);
         const body = encodeURIComponent(`Hello Management,\n\n${currentUser.displayName} has submitted a leave request.\n\nType: ${type}\nFrom: ${start}\nTo: ${end}\nNotes: ${notes || 'None'}\n\nPlease check the St Giles Rota dashboard for updates.`);
         
-        console.log(`[Email Dispatch Triggered] To: ${recipientEmails || 'admin@stgiles.co.uk'} | Subject: Leave Request from ${currentUser.displayName}`);
-
-        // Automatically spawn a prefilled email client link or background trigger for management alerts
         const mailTrigger = document.createElement('a');
         mailTrigger.href = `mailto:${recipientEmails || 'admin@stgiles.co.uk'}?subject=${subject}&body=${body}`;
         mailTrigger.style.display = 'none';
@@ -952,7 +977,6 @@
 
       try {
         const user = auth.currentUser;
-        // Re-authenticate user first
         await reauthenticateUser(auth, user.email, oldPass);
         await updatePassword(user, newPass);
         
